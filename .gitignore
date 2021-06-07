@@ -9,5 +9,6 @@ raw_data/
 # Data
 
 /raw_data
+big_picture/data
 *.csv
 *.json
