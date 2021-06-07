@@ -5,3 +5,9 @@
 raw_data/
 **/__pycache__/
 .env
+
+# Data
+
+/raw_data
+*.csv
+*.json
