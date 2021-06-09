@@ -7,7 +7,7 @@ from nltk.tokenize import word_tokenize # tokenizing
 from nltk.stem.snowball import SnowballStemmer # stemming (improved version of PorterStemmer)(optional)
 from nltk.stem import WordNetLemmatizer # lematizing with POS tags (optional)
 from nltk.corpus import wordnet
-from big_picture.get_merged_data import get_data
+
 # from sklearn.feature_extraction.text import TfidfVectorizer # in case vectorizer is added here 
 # import numpy as np # in case this is needed
 import pandas as pd
