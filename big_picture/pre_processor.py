@@ -41,28 +41,28 @@ def pre_process(**kwargs):
     df = df.sample(150)
     df[CONTENT_COL] = df[CONTENT_COL].replace('\n',' ', regex=True)
 
-    print("read_csv")
+    # print("read_csv")
     
     # Drop NA's and drop columns where there's only the string "Invalid file"
     df[news_all_data] = df[CONTENT_COL] + " " + df[DESCRIPTION_COL] + " " + df[HEADLINE_COL]
     df = df.dropna(subset=[news_all_data]).reset_index()
     df = df[df[news_all_data] != "Invalid file"].reset_index(drop=True)
 
-    print("read_csv")
+    # print("read_csv")
 
     #import ipdb; ipdb.set_trace()
     # 1.1 lowercase "news + headline" column
     if kwargs.get("lower_case") or kwargs.get("all_true"): 
         df[news_all_data] = df[news_all_data].str.lower()
 
-    print("lowercase")
+    # print("lowercase")
 
     # 1.2 Create number of "news + headline" decimals column (we need to find a way to use this in the future)
     df['nrs_count'] = df[news_all_data].str.count('\d')
     df['nrs_count'] = df['nrs_count'].fillna(0)
     df['nrs_count'] = df['nrs_count'].astype(float).astype(int)
 
-    print("nrs count")
+    # print("nrs count")
 
     # 1.3 remove digits from news_all_data column
     if kwargs.get("no_digits") or kwargs.get("all_true"):
@@ -75,7 +75,7 @@ def pre_process(**kwargs):
     df['exclamations'] = df[news_all_data].str.count('\!')
     df['irony'] = df[news_all_data].map(lambda x: len(re.findall('\?!|\!\?',str(x))))
 
-    print("emotions")
+    # print("emotions")
 
     # 1.5 Remove punctuation
     if kwargs.get("rem_punct") or kwargs.get("all_true"):
@@ -88,7 +88,7 @@ def pre_process(**kwargs):
     # 1.6 Tokenize
     df[news_all_data] = df[news_all_data].apply(lambda x: word_tokenize(x))
 
-    print("tokenize")
+    # print("tokenize")
 
     # 1.7 Remove stopwords
     if kwargs.get("rem_stopwords") or kwargs.get("all_true"):
@@ -96,7 +96,7 @@ def pre_process(**kwargs):
         df[news_all_data] = df[news_all_data]\
                                 .apply(lambda x: [word for word in x if not word in stop_words])
 
-        print("stopwords")
+        # print("stopwords")
 
     # 1.8a Stemming (optional)
     if kwargs.get("stem_not_lematize"):
@@ -105,7 +105,7 @@ def pre_process(**kwargs):
         df[news_all_data] = df[news_all_data]\
                                     .apply(lambda x: [stemmer.stem(word) for word in x])
 
-        print("stemming")
+        # print("stemming")
 
     # 1.8b Lematizing with POS tags in english (optional)
     if kwargs.get("lematize") or (kwargs.get("all_true") and kwargs.get("stem_not_lematize")==False):
@@ -123,7 +123,7 @@ def pre_process(**kwargs):
         df[news_all_data] = df[news_all_data]\
                                     .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])
 
-        print("lematizing")
+        # print("lematizing")
 
    # 1.9 Adding vocab richness column (we need to find a way to use this column in the future)
     def vocab_richness(text):
@@ -137,7 +137,7 @@ def pre_process(**kwargs):
     df[news_all_data] = df[news_all_data].map(lambda x: ' '.join(x))
     df['vocab richness'] = df[news_all_data].apply(lambda x: vocab_richness(x))
 
-    print("vocab_richness")
+    # print("vocab_richness")
 
     return df[news_all_data]
 
