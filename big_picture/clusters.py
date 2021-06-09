@@ -1,12 +1,11 @@
 """
-Vectorizers and models to cluster seuqences of articles by topic.
+Models to cluster seuqences of articles by topic.
 """
 
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 import hdbscan as hdb
 from sklearn.cluster import KMeans
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 class Cluster():
     """
@@ -25,14 +24,6 @@ class Cluster():
         self.df = cluster
         self.topic = topic
     
-def tf_idf(X):
-    """
-    Vectorize a sequence of strings
-    """
-
-    vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform(X)
-    return vectors
 
 def extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=20):
     """
