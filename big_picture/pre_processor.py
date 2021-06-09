@@ -7,7 +7,7 @@ from nltk.tokenize import word_tokenize # tokenizing
 from nltk.stem.snowball import SnowballStemmer # stemming (improved version of PorterStemmer)(optional)
 from nltk.stem import WordNetLemmatizer # lematizing with POS tags (optional)
 from nltk.corpus import wordnet
-from get_merged_data import get_data
+from big_picture.get_merged_data import get_data
 # from sklearn.feature_extraction.text import TfidfVectorizer # in case vectorizer is added here 
 # import numpy as np # in case this is needed
 import pandas as pd
@@ -33,12 +33,13 @@ args_methods = {"all_true":True,
 
 # Pre-process:
 # 1 Read Raw data, basic clean data, create base news+headline column and other basic support data columns
-def pre_process(**kwargs):
+def pre_process(df,sample=None, **kwargs):
     # column where all "news" content is stored
     news_all_data = "news_all_data"
 
-    df =  get_data(REL_PATH_INPUT)
-    df = df.sample(150)
+    if sample:
+        df = df.sample(sample)
+
     df[CONTENT_COL] = df[CONTENT_COL].replace('\n',' ', regex=True)
 
     print("read_csv")
