@@ -1,12 +1,13 @@
+"""
+Label classifier
+"""
+
 # General libraries
 import pandas as pd
 import numpy as np
 # import matplotlib.pyplot as plt
 # import seaborn as sns
 # import requests
-
-# Embedding libraries
-from sentence_transformers import SentenceTransformer
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -15,6 +16,22 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 
+
+class Classifier():
+    """
+    Class that creates an object with a model and the topics associated to the model.
+
+    Parameters
+    ----------
+    model : string
+        Name of the model to be used.
+    
+    topics: dict
+        Dictionary with the topics as values and their index as key.
+    """
+    def __init__(self, model, topics):
+        self.model = load_model(model)
+        self.topics = topics
 
 class Classifier():
     """
@@ -49,14 +66,6 @@ def prepare_data_for_classifying(df):
     new_df = df.copy()
     new_df['merged_strings'] = df.title + df.content
     return new_df
-
-def embedding_string(strings, progress_bar=False):
-    '''Embedding of the instance string 
-    represented by its title and content.
-    Note: Receives an array of strings, or a single string'''
-    model = SentenceTransformer('distilbert-base-nli-mean-tokens')
-    embeddings = model.encode(strings, show_progress_bar=progress_bar)
-    return embeddings
 
 def load_model(model='classifier_baseline'):
     '''Load the model to classify the topic of the string.
