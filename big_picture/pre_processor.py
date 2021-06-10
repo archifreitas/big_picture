@@ -25,12 +25,14 @@ HEADLINE_COL = "headline"
 # If "all_true" is set to true, we will lematize
 
 # Pre-process:
-# 1 Read Raw data, basic clean data, create base news+headline column and other basic support data columns
+# 1 Basic cleaning of data is not optional, create base news+headline column and other basic support data columns
 def pre_process(df,sample=None,
                 all_true=False, 
                 lower_case=False, 
                 no_digits=False,
                 rem_punct=False,
+                de_emojify=False,
+                tokenize=False,
                 rem_stopwords=False,
                 stem_not_lematize=False,
                 lematize=False):
@@ -48,6 +50,11 @@ def pre_process(df,sample=None,
     df[news_all_data] = df[CONTENT_COL] + " " + df[DESCRIPTION_COL] + " " + df[HEADLINE_COL]
     df = df.dropna(subset=[news_all_data]).reset_index()
     df = df[df['content'] != "Invalid file"].reset_index(drop=True)
+
+    # This creates a column with minor preprocessing wether we need it or not.
+    # If all_true is set to all_true=False the news_all_data column in the returned df
+    # is going to be equal to this one
+    df['minor_preprocessing'] = df[news_all_data]
 
     print("read_csv")
 
@@ -80,18 +87,48 @@ def pre_process(df,sample=None,
 
     # 1.5 Remove punctuation
     if rem_punct or all_true:
-        real_string_punctuation = string.punctuation + "—" + '”' + "’" + '“' + '´' + "`" + "«" + "»"
+        real_string_punctuation = string.punctuation + "—" + '”' + "’" + "‘" + "…" + '“' + '´' + "`" + "«" + "»"
         df[news_all_data] = df[news_all_data].apply(lambda x: ''\
                                             .join(word for word in x if word not in real_string_punctuation))
 
         print("punctuation")
 
-    # 1.6 Tokenize
-    df[news_all_data] = df[news_all_data].apply(lambda x: word_tokenize(x))
+    # 1.6 Remove emojis
+    if de_emojify or all_true:
+        def deEmojify(text):
+            regrex_pattern = re.compile(pattern = "["
+                u"\U0001F600-\U0001F64F"  # emoticons
+                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                u"\U00002500-\U00002BEF"  # chinese char
+                u"\U00002702-\U000027B0"
+                u"\U00002702-\U000027B0"
+                u"\U000024C2-\U0001F251"
+                u"\U0001f926-\U0001f937"
+                u"\U00010000-\U0010ffff"
+                u"\u2640-\u2642" 
+                u"\u2600-\u2B55"
+                u"\u200d"
+                u"\u23cf"
+                u"\u23e9"
+                u"\u231a"
+                u"\ufe0f"  # dingbats
+                u"\u3030"
+                                "]+", flags = re.UNICODE)
+            return regrex_pattern.sub(r'',text)
+        
+        df[news_all_data] = df["news_all_data"].apply(lambda x: deEmojify(x))
 
-    # print("tokenize")
+    print("de_emojify")
 
-    # 1.7 Remove stopwords
+    if tokenize or all_true:
+    # 1.7 Tokenize
+        df[news_all_data] = df[news_all_data].apply(lambda x: word_tokenize(x))
+
+    print("tokenize")
+
+    # 1.8 Remove stopwords
     if rem_stopwords or all_true:
         stop_words = set(stopwords.words('english'))
         df[news_all_data] = df[news_all_data]\
@@ -99,7 +136,7 @@ def pre_process(df,sample=None,
 
         print("stopwords")
 
-    # 1.8a Stemming (optional)
+    # 1.9a Stemming (optional)
     if stem_not_lematize:
         stemmer = SnowballStemmer(language='english')
         
@@ -108,7 +145,7 @@ def pre_process(df,sample=None,
 
         print("stemming")
 
-    # 1.8b Lematizing with POS tags in english (optional)
+    # 1.9b Lematizing with POS tags in english (optional)
     if lematize or (all_true and not stem_not_lematize):
         def get_wordnet_pos(word):
             """Map POS tag to first character lemmatize() accepts"""
@@ -127,7 +164,7 @@ def pre_process(df,sample=None,
 
         print("lematizing")
 
-   # 1.9 Adding vocab richness column (we need to find a way to use this column in the future)
+   # 1.10 Adding vocab richness column (we need to find a way to use this column in the future)
     def vocab_richness(text):
         tokens = word_tokenize(text)
         total_length = len(tokens)
@@ -140,23 +177,25 @@ def pre_process(df,sample=None,
     df['vocab richness'] = df[news_all_data].apply(lambda x: vocab_richness(x))
 
     print("vocab_richness")
-
+  
     return df
 
 if __name__ == "__main__":
     from big_picture.get_merged_data import get_data
 
-    df =  get_data(REL_PATH_INPUT)
+    df1 =  get_data(REL_PATH_INPUT)
     
-    df1 = pre_process(df,
+    df2 = pre_process(df1,sample=None,
                 all_true=True, 
                 lower_case=False, 
                 no_digits=False,
                 rem_punct=False,
+                de_emojify=False,
                 rem_stopwords=False,
                 stem_not_lematize=False,
                 lematize=False)
 
-    print(df1.news_all_data.head(5))
+    #for i in range(10):
+    #    print(df2.news_all_data.iloc[i])
 
-    df1.to_csv(r'/data/data_30k_all_true.csv', index = False, header=True)
+    df2.to_csv(r'./data/data_30k_all_true.csv', index = False, header=True)
