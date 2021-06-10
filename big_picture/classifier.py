@@ -4,7 +4,8 @@ Label classifier
 # Internal libraries
 from big_picture.clusters import kmeans
 from big_picture.pre_processor import pre_process
-from big_picture.vectorizers import embedding_string, tf_idf
+from big_picture.vectorizers import embedding_strings, tf_idf
+from big_pciture.label import Label
 
 # General libraries
 import pandas as pd
@@ -19,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder
 # Modelling libraries
 from tensorflow.keras import models
 from tensorflow.keras import layers
+from tensorflow.keras.callbacks import EarlyStopping
 
 # Label dictionary
 labels_dict = {0: 'Activism',
@@ -52,19 +54,19 @@ class Classifier():
         Value between 0 and 1 for the classifier to consider that a prediction belongs to a certain topic.
     """
 
-    def __init__(self, labels, threshold=0.4):
-        self.labels = labels
+    def __init__(self, threshold=0.4):
         self.threshold = threshold
         self.model = None
+        self.labels = None
     
-    def classifying_threshold(self, predictions,threshold):
-        '''Labels prediction depending on probability distribution of the classes'''
-        val_dict = labels_dict
-        labels = []
-        for idx, val in enumerate(predictions):
-            if val > threshold:
-                labels.append(val_dict[idx])
-        return labels
+    # def classifying_threshold(self, predictions,threshold):
+    #     '''Labels prediction depending on probability distribution of the classes'''
+    #     val_dict = labels_dict
+    #     labels = []
+    #     for idx, val in enumerate(predictions):
+    #         if val > threshold:
+    #             labels.append(val_dict[idx])
+    #     return labels
     
     def fit(train, model=initialize_class_bert_dropout()):
         '''
@@ -88,75 +90,88 @@ class Classifier():
                                           all_true=True)                        
         
         # Train classifier with train data
-        X = pre_processed_train.drop(columns='label')
-        y = pre_processed_train.label
+        ohe = OneHotEncoder()
+
+        X = embedding_strings(pre_processed_train.drop(columns='label'))
+        y = ohe.fit_transform(pre_processed_train[['label']].toarray())
+
+        # Save tags for labels to class
+        self.labels_tag = ohe.categories_[0]
         
         # Save model variable to class
-        self.model = model.fit(X, y)
+        es = EarlyStopping(patience=10)
+
+        self.model = model.fit(embeddings_200k,
+                               y,
+                               epochs=20,
+                               validation_split=0.25,
+                               batch_size=32,
+                               callbacks=[es],
+                               verbose=1
+                               )
 
     def save():
+        '''Saves a classifying model'''
         if self.model != None:
             filename = 'finalized_model.sav'
             pickle.dump(model, open(filename, 'wb'))
         else:
             raise Exception('Please fit a model first')
-    
-     # Predict model with all_news_data_dataset
-        model.predict()
-        # return model and new_world
        
-    def divide_labels():
+    def divide_labels(world):
+        '''Populates the classifier with data for clustering'''
+        if self.model != None:
 
-        # Pre-process data
-        pre_processed_train = pre_process(train,
-                                          sample=1,
-                                          all_true=True)
+            # Pre-process data
+            pre_processed_world = pre_process(world,
+                                            sample=1,
+                                            all_true=True)   
+            
+            # Set data to predict
+            X = embedding_strings(pre_processed_world)
 
-        pre_processed_world = pre_process(world,
-                                          sample=1,
-                                          all_true=True)   
+            # Predict data
+            results = self.model.predict(pre_processed_world)
 
-        pass
+            # Divide into labels
+            labels = {key: [] for key in labels_dict.keys()}
 
-        
-        ##### Divide into specific labels
-        # Divide all_news_data_dataset into 16 Topic() instances
-        # return classifier instance
+            for i, result in enumerate(results):
+                for j, label_pred in enumerate(result):
+                    if label_pred >= self.threshold:
+                        labels[j].append(i)
 
 
+            # Transform into Label() instances                
+            self.labels = {}
 
-        # Pick model to train here
-        model = initialize_class_bert_0()
+            for key, value in labels.items():
+                self.labels[key] = Label(pre_processed_world.iloc[value, :], self.labels_tag[key])
 
-        pre_processed_df = pre_process(df,
-                                    sample=1,
-                                    all_true=True)
+        else:
+            raise Exception('Please fit a model first')
+    
+    def predict(self, df):
 
-        X = pre_processed_df.drop(columns='label')
-        y = pre_processed_df.label
+        pre_processed_X = pre_process(df)
+        embedded_X = embedding_string(pre_processed_X)
+        prediction = self.model.predict(embedded_X)
 
-        model.fit()
+        # Put into correct labels
 
-        #### Add preprocessing and divide in topics
-        #### Output should be a dictionary of Topic() instances
+        labels = []
+
+        for i, result in enumerate(results):
+            for j, label_pred in enumerate(result):
+                if label_pred >= self.threshold:
+                    labels.append(self.labels_tag[j])
         
         output = []
+        # Check if it is embedded X
+        for label in labels:
+            output.append((label, self.labels[label].predict(embedded_X)))
 
-        # for i in range(len(data)):
-        #     for label in data['label']:
-        #         output.append(Topic(data[data['label'] == label], label))
-
-        classifier = Classifier(model, output)
-        pikle.dump()
-
-    
-    def predict(self, string):
-        predictions = self.model.predict(embedding_string(string))
-        return self.classifying_threshold(predictions, self.threshold)
-
-
-# Save pipeline function
-
+        return output
 
 
 ### Classification reports
