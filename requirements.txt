@@ -9,6 +9,7 @@ numpy
 pandas
 scikit-learn
 hdbscan
+tensorflow
 
 # tests/linter
 black
@@ -28,3 +29,19 @@ six>=1.14
 joblib
 memoized-property
 termcolor
+
+# preprocessing
+ipywidgets
+nltk
+transformers
+string
+re
+
+
+
+
+
+
+
+
+
