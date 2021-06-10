@@ -47,7 +47,7 @@ def pre_process(df,sample=None,
     # Drop NA's and drop columns where there's only the string "Invalid file"
     df[news_all_data] = df[CONTENT_COL] + " " + df[DESCRIPTION_COL] + " " + df[HEADLINE_COL]
     df = df.dropna(subset=[news_all_data]).reset_index()
-    df = df[df[news_all_data] != "Invalid file"].reset_index(drop=True)
+    df = df[df['content'] != "Invalid file"].reset_index(drop=True)
 
     # print("read_csv")
 
