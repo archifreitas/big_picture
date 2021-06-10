@@ -3,9 +3,11 @@ Models to cluster seuqences of articles by topic.
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
 import hdbscan as hdb
 from sklearn.cluster import KMeans
+from wordcloud import WordCloud, STOPWORDS
 
 class Cluster():
     """
@@ -19,10 +21,20 @@ class Cluster():
 
     topic : list
         List of words describing cluster
+
+    combined_text : string
+        Agregated string with all the text in a cluster of articles
     """
-    def __init__(self, cluster, topic):
+
+    def __init__(self, cluster, topic, wordcloud):
         self.df = cluster
         self.topic = topic
+        self.wordcloud = wordcloud
+    
+    def show_wordcloud(self, size=8):
+        plt.imshow(self.wordcloud)
+        plt.tight_layout(pad = 0)
+        plt.show()
     
 
 def extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=20):
@@ -85,8 +97,15 @@ def output_format(X, column, return_cluster_sizes):
     
     output = []
     for i, cluster in enumerate(clusters):
+        wordcloud = WordCloud(width = 800, height = 800,
+                    background_color ='white',
+                    min_font_size = 10).generate(docs_per_topic[column].iloc[i])
         output.append(
-            Cluster(cluster,top_n_words[i])
+            Cluster(
+                cluster,
+                top_n_words[i],
+                wordcloud
+            )
         )
 
     if return_cluster_sizes:
