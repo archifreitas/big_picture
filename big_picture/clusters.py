@@ -22,8 +22,8 @@ class Cluster():
     topic : list
         List of words describing cluster
 
-    combined_text : string
-        Agregated string with all the text in a cluster of articles
+    wordcloud : object
+        Wordcloud object ready to py shown using matplolib
     """
 
     def __init__(self, cluster, topic, wordcloud):
@@ -32,6 +32,9 @@ class Cluster():
         self.wordcloud = wordcloud
     
     def show_wordcloud(self, size=8):
+        """
+        Shows wordlcoud using matlpotlib
+        """
         plt.imshow(self.wordcloud)
         plt.tight_layout(pad = 0)
         plt.show()
