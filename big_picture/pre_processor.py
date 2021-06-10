@@ -23,17 +23,17 @@ HEADLINE_COL = "headline"
 
 # Parameters for pre-processing methods
 # If "all_true" is set to true, we will lematize
-args_methods = {"all_true":False, 
-                "lower_case":False, 
-                "no_digits":False,
-                "rem_punct":False,
-                "rem_stopwords":False,
-                "stem_not_lematize":False,
-                "lematize":False}
 
 # Pre-process:
 # 1 Read Raw data, basic clean data, create base news+headline column and other basic support data columns
-def pre_process(df,sample=None, **kwargs):
+def pre_process(df,sample=None,
+                all_true=False, 
+                lower_case=False, 
+                no_digits=False,
+                rem_punct=False,
+                rem_stopwords=False,
+                stem_not_lematize=False,
+                lematize=False):
     # column where all "news" content is stored
     news_all_data = "news_all_data"
 
@@ -53,7 +53,7 @@ def pre_process(df,sample=None, **kwargs):
 
     #import ipdb; ipdb.set_trace()
     # 1.1 lowercase "news + headline" column
-    if kwargs.get("lower_case") or kwargs.get("all_true"): 
+    if lower_case or all_true: 
         df[news_all_data] = df[news_all_data].str.lower()
 
     # print("lowercase")
@@ -66,7 +66,7 @@ def pre_process(df,sample=None, **kwargs):
     # print("nrs count")
 
     # 1.3 remove digits from news_all_data column
-    if kwargs.get("no_digits") or kwargs.get("all_true"):
+    if no_digits or all_true:
         df[news_all_data] = df[news_all_data].apply(lambda x: ''.join(word for word in x if not word.isdigit()))
 
         print("remove_digits")
@@ -79,7 +79,7 @@ def pre_process(df,sample=None, **kwargs):
     # print("emotions")
 
     # 1.5 Remove punctuation
-    if kwargs.get("rem_punct") or kwargs.get("all_true"):
+    if rem_punct or all_true:
         real_string_punctuation = string.punctuation + "—" + '”' + "’" + '“' + '´' + "`" + "«" + "»"
         df[news_all_data] = df[news_all_data].apply(lambda x: ''\
                                             .join(word for word in x if word not in real_string_punctuation))
@@ -92,7 +92,7 @@ def pre_process(df,sample=None, **kwargs):
     # print("tokenize")
 
     # 1.7 Remove stopwords
-    if kwargs.get("rem_stopwords") or kwargs.get("all_true"):
+    if rem_stopwords or all_true:
         stop_words = set(stopwords.words('english'))
         df[news_all_data] = df[news_all_data]\
                                 .apply(lambda x: [word for word in x if not word in stop_words])
@@ -100,7 +100,7 @@ def pre_process(df,sample=None, **kwargs):
         # print("stopwords")
 
     # 1.8a Stemming (optional)
-    if kwargs.get("stem_not_lematize"):
+    if stem_not_lematize:
         stemmer = SnowballStemmer(language='english')
         
         df[news_all_data] = df[news_all_data]\
@@ -109,7 +109,7 @@ def pre_process(df,sample=None, **kwargs):
         # print("stemming")
 
     # 1.8b Lematizing with POS tags in english (optional)
-    if kwargs.get("lematize") or (kwargs.get("all_true") and kwargs.get("stem_not_lematize")==False):
+    if lematize or (all_true and not stem_not_lematize):
         def get_wordnet_pos(word):
             """Map POS tag to first character lemmatize() accepts"""
             tag = nltk.pos_tag([word])[0][1][0].upper()
@@ -121,6 +121,7 @@ def pre_process(df,sample=None, **kwargs):
             return tag_dict.get(tag, wordnet.NOUN)
 
         lemmatizer = WordNetLemmatizer()
+        nltk.download('averaged_perceptron_tagger')
         df[news_all_data] = df[news_all_data]\
                                     .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])
 
@@ -140,7 +141,7 @@ def pre_process(df,sample=None, **kwargs):
 
     # print("vocab_richness")
 
-    return df[news_all_data]
+    return df
 
 if __name__ == "__main__":
     print(pre_process(**args_methods))
