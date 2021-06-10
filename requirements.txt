@@ -34,7 +34,6 @@ termcolor
 ipywidgets
 nltk
 transformers
-string
 re
 
 
