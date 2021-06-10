@@ -1,6 +1,10 @@
 """
 Label classifier
 """
+# Internal libraries
+from big_picture.clusters import kmeans
+from big_picture.pre_processor import pre_process
+from big_picture.vectorizers import embedding_string, tf_idf
 
 # General libraries
 import pandas as pd
@@ -16,6 +20,23 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 
+# Label dictionary
+labels_dict = {0: 'Activism',
+               1: 'Business',
+               2: 'Crime',
+               3: 'Culture',
+               4: 'Education',
+               5: 'Entertainment',
+               6: 'Health',
+               7: 'Media',
+               8: 'Other',
+               9: 'Politics',
+               10: 'Religion',
+               11: 'Science',
+               12: 'Sports',
+               13: 'Technology',
+               14: 'Trends',
+               15: 'World News'}
 
 class Classifier():
     """
@@ -23,128 +44,119 @@ class Classifier():
 
     Parameters
     ----------
-    model : string
-        Name of the model to be used.
     
-    topics: dict
-        Dictionary with the topics as values and their index as key.
+    labels: class
+        Class containing the subsets of the original dataset by label.
+
+    threshold: float
+        Value between 0 and 1 for the classifier to consider that a prediction belongs to a certain topic.
     """
-    def __init__(self, model, topics):
-        self.model = load_model(model)
-        self.topics = topics
 
-class Classifier():
-    """
-    Class that creates an object to be labelled by topic.
-
-    Parameters
-    ----------
-    instance : df
-        DataFrame containing the features to be analyzed:
-        - Title;
-        - Authors;
-        - Publisher;
-        - Date;
-        - Link;
-        - Content.
-
-    """
-    def __init__(self, instance, label):
-        self.df = instance
-        self.label = label
-
-def prepare_data_for_classifying(df):
-    '''Return the concatenation of strings
-
-    Parameters
-    ----------
-    df : df
-        DataFrame containing the columns to be merged:
-        - Title;
-        - Content.
-    To add more pre-processing if necessary'''
-    new_df = df.copy()
-    new_df['merged_strings'] = df.title + df.content
-    return new_df
-
-def load_model(model='classifier_baseline'):
-    '''Load the model to classify the topic of the string.
+    def __init__(self, labels, threshold=0.4):
+        self.labels = labels
+        self.threshold = threshold
+        self.model = None
     
-    Parameters
-    ----------
-    model : string
-        Name of the model to be used.
-    '''
-    file_path = 'models/' + model
-    model = models.load_model(file_path)
-    return model
-
-
-def make_a_prediction(model, strings):
-    '''Outputs the label of a vectorized string.
-
-    Parameters
-    ----------
-
-    model: string
-        Name of the model to be used.
-
-    strings : array or series of strings
-        Array of strings to be labelled.
-    '''
-    vectorized_string = embedding_string(strings)
-    model = load_model(model)
-    return model.predict(vectorized_string)
-
-def classifying_threshold(predictions,threshold):
-    '''Labels prediction depending on probability distribution of the classes'''
-    val_dict = {0: 'Activism',
-                1: 'Business',
-                2: 'Crime',
-                3: 'Culture',
-                4: 'Education',
-                5: 'Entertainment',
-                6: 'Health',
-                7: 'Media',
-                8: 'Other',
-                9: 'Politics',
-                10: 'Religion',
-                11: 'Science',
-                12: 'Sports',
-                13: 'Technology',
-                14: 'Trends',
-                15: 'World News'}
-    labels = []
-    for idx, val in enumerate(predictions):
-        if val > threshold:
-            labels.append(val_dict[idx])
-    return labels
-
-
-def classifying_pipeline(df, model):
-    '''Generates an instance of Classifier with the dataframe 
-    and label associated with the dataframe.
-
-    Parameters
-    ----------
-    df : array or series of strings
-        Array of strings to be labelled.
+    def classifying_threshold(self, predictions,threshold):
+        '''Labels prediction depending on probability distribution of the classes'''
+        val_dict = labels_dict
+        labels = []
+        for idx, val in enumerate(predictions):
+            if val > threshold:
+                labels.append(val_dict[idx])
+        return labels
     
-    model : string
-        Name of the model to be used.
-    '''
-    data = prepare_data_for_classifying(df)
-    results = make_a_prediction(data['merged_strings'])
+    def fit(train, model=initialize_class_bert_dropout()):
+        '''
+        Generate a model and fit it to the train_data.
 
-    data['label'] = classifying_threshold(results)
+        Parameters
+        ----------
+        train : df
+            DataFrame containing the data to train
 
-    output = []
+        world : df
+            DataFrame to predict labels from and generate world of clusters.
+        
+        model : model
+            Classification model to be used.
+        '''
 
-    for i in range(len(data)):
-        for label in data['label']:
-            output.append(Classifier(data, label))
+        # Pre-process data
+        pre_processed_train = pre_process(train,
+                                          sample=1,
+                                          all_true=True)                        
+        
+        # Train classifier with train data
+        X = pre_processed_train.drop(columns='label')
+        y = pre_processed_train.label
+        
+        # Save model variable to class
+        self.model = model.fit(X, y)
 
-    return output
+    def save():
+        if self.model != None:
+            filename = 'finalized_model.sav'
+            pickle.dump(model, open(filename, 'wb'))
+        else:
+            raise Exception('Please fit a model first')
+    
+     # Predict model with all_news_data_dataset
+        model.predict()
+        # return model and new_world
+       
+    def divide_labels():
+
+        # Pre-process data
+        pre_processed_train = pre_process(train,
+                                          sample=1,
+                                          all_true=True)
+
+        pre_processed_world = pre_process(world,
+                                          sample=1,
+                                          all_true=True)   
+
+        pass
+
+        
+        ##### Divide into specific labels
+        # Divide all_news_data_dataset into 16 Topic() instances
+        # return classifier instance
+
+
+
+        # Pick model to train here
+        model = initialize_class_bert_0()
+
+        pre_processed_df = pre_process(df,
+                                    sample=1,
+                                    all_true=True)
+
+        X = pre_processed_df.drop(columns='label')
+        y = pre_processed_df.label
+
+        model.fit()
+
+        #### Add preprocessing and divide in topics
+        #### Output should be a dictionary of Topic() instances
+        
+        output = []
+
+        # for i in range(len(data)):
+        #     for label in data['label']:
+        #         output.append(Topic(data[data['label'] == label], label))
+
+        classifier = Classifier(model, output)
+        pikle.dump()
+
+    
+    def predict(self, string):
+        predictions = self.model.predict(embedding_string(string))
+        return self.classifying_threshold(predictions, self.threshold)
+
+
+# Save pipeline function
+
 
 
 ### Classification reports
@@ -177,7 +189,7 @@ def initialize_class_bert_0():
     return model
 
 
-def initialize__class_bert_dropout():
+def initialize_class_bert_dropout():
     
     model = models.Sequential()
     

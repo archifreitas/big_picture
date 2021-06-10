@@ -24,7 +24,7 @@ def tf_idf(X):
 
     vectorizer = TfidfVectorizer()
     vectors = vectorizer.fit_transform(X)
-    return vectors
+    return vectors, vectorizer
 
 def reduce_dimensions(data, dimensions, n_neigbors=15):
     """
