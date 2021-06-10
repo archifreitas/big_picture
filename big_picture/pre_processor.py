@@ -23,12 +23,12 @@ HEADLINE_COL = "headline"
 
 # Parameters for pre-processing methods
 # If "all_true" is set to true, we will lematize
-args_methods = {"all_true":True, 
-                "lower_case":True, 
-                "no_digits":True,
-                "rem_punct":True,
-                "rem_stopwords":True,
-                "stem_not_lematize":True,
+args_methods = {"all_true":False, 
+                "lower_case":False, 
+                "no_digits":False,
+                "rem_punct":False,
+                "rem_stopwords":False,
+                "stem_not_lematize":False,
                 "lematize":False}
 
 # Pre-process:
