@@ -5,9 +5,18 @@ Models to cluster seuqences of articles by topic.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
-import hdbscan as hdb
+#import hdbscan as hdb
 from sklearn.cluster import KMeans
 from wordcloud import WordCloud, STOPWORDS
+
+class Clusters():
+    def __init__(self, clusters, sizes, model):
+        self.cluster_list = clusters
+        self.sizes = sizes
+        self.model = model
+
+    def predict(self, vector):
+        return self.model.predict(vector)[0]
 
 class Cluster():
     """
@@ -22,8 +31,8 @@ class Cluster():
     topic : list
         List of words describing cluster
 
-    wordcloud : object
-        Wordcloud object ready to py shown using matplolib
+    combined_text : string
+        Agregated string with all the text in a cluster of articles
     """
 
     def __init__(self, cluster, topic, wordcloud):
@@ -32,9 +41,6 @@ class Cluster():
         self.wordcloud = wordcloud
     
     def show_wordcloud(self, size=8):
-        """
-        Shows wordlcoud using matlpotlib
-        """
         plt.imshow(self.wordcloud)
         plt.tight_layout(pad = 0)
         plt.show()
@@ -81,7 +87,7 @@ def c_tf_idf(documents, m, ngram_range=(1, 1)):
 
     return tf_idf, count
 
-def output_format(X, column, return_cluster_sizes):
+def output_format(X, column, model):
     """
     Returns a list of cluster objects with the dataframe and topic
     Optionally the size of each cluster
@@ -111,11 +117,9 @@ def output_format(X, column, return_cluster_sizes):
             )
         )
 
-    if return_cluster_sizes:
-        return output, extract_cluster_sizes(X)
-    return output
+    return Clusters(output, extract_cluster_sizes(X), model)
 
-def kmeans(X, column, vectors, clusters=8, return_cluster_sizes=False):
+def kmeans(X, column, vectors, clusters=8):
     """
     Kmean model that outputs a list of cluster objects with the dataframe and topic
 
@@ -141,9 +145,10 @@ def kmeans(X, column, vectors, clusters=8, return_cluster_sizes=False):
 
     X['topic'] = model.labels_
 
-    return output_format(X,column, return_cluster_sizes=return_cluster_sizes)
+    return output_format(X, column, model)
 
-def hdbscan(X, column, vectors, min_cluster_size=5, return_cluster_sizes=False):
+'''
+def hdbscan(X, column, vectors, min_cluster_size=5):
     """
     Hbdscan clustering model that outputs a list of cluster objects with the dataframe and topic
 
@@ -166,10 +171,12 @@ def hdbscan(X, column, vectors, min_cluster_size=5, return_cluster_sizes=False):
         Optionally return the size of each cluster
     """
 
+
     model = hdb.HDBSCAN(min_cluster_size=min_cluster_size,
                           metric='euclidean',                      
                           cluster_selection_method='eom').fit(vectors)
 
     X['topic'] = model.labels_
 
-    return output_format(X,column, return_cluster_sizes=return_cluster_sizes)
+    return output_format(X, column, model)
+'''
