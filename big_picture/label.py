@@ -2,11 +2,11 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 #import hdbscan as hdb
 from sklearn.cluster import KMeans
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
 from big_picture.pre_processor import pre_process
-from big_picture.vectorizers import tf_idf
+from big_picture.vectorizers import tf_idf, embedding_strings
 
 class Label():
     """
@@ -26,29 +26,29 @@ class Label():
     label: string
         Label correponding to the topic of the class.
 
-    vec_name: string (default: tf_idf)
-        Name of vectorizer to be used for vectorizing
+    vec_name: string (default: embedding_string)
+        Name of vectorizer to be used for vectorizing. Options:
+        embedding_string
+        tf_idf
     
     model_name: string (default: kmeans)
         Name of model to be used for clustering
     
     """
-    def __init__(self, df, label, vec_name='tf_idf', model_name='kmeans'):
+    def __init__(self, df, label, *args, vec_name='embedding_strings', model_name='kmeans'):
         self.label = label
 
-        pre_processed_df = pre_process(df,
-                                sample=1,
-                                all_true=True)
-
         if vec_name == 'tf_idf':
-            vectors, self.vectorizer = tf_idf(pre_processed_df.news_all_data)
+            vectors, self.vectorizer = tf_idf(df.news_all_data)
+        elif vec_name == 'embedding_strings':
+            vectors, self.vectorizer = embedding_strings(df.news_all_data,  return_model=True)
         else:
             pass
 
         self.model = None
         self.sizes = None
         if model_name == 'kmeans':
-            self.clusters= self.kmeans(pre_processed_df, 
+            self.clusters= self.kmeans(df, 
                                   'news_all_data', 
                                   vectors, 
                                   clusters=8)
