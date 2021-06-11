@@ -2,10 +2,9 @@
 Label classifier
 """
 # Internal libraries
-from big_picture.clusters import kmeans
 from big_picture.pre_processor import pre_process
 from big_picture.vectorizers import embedding_strings, tf_idf
-from big_pciture.label import Label
+from big_picture.label import Label
 
 # General libraries
 import pandas as pd
@@ -64,7 +63,7 @@ class Classifier():
         self.labels = None
 
 
-    def fit(train, model=initialize_class_bert_dropout()):
+    def fit(self, train, model='dropout'):
         '''
         Generate a model and fit it to the train_data.
 
@@ -80,22 +79,20 @@ class Classifier():
             Classification model to be used.
         '''
 
-        # Pre-process data
-        pre_processed_train = pre_process(train,
-                                          sample=1,
-                                          all_true=True)                        
-        
         # Train classifier with train data
         ohe = OneHotEncoder()
 
-        X = embedding_strings(pre_processed_train.drop(columns='label'))
-        y = ohe.fit_transform(pre_processed_train[['label']].toarray())
+        X = embedding_strings(train[['all_news_data']])
+        y = ohe.fit_transform(train[['label']].toarray())
 
         # Save tags for labels to class
         self.labels_tag = ohe.categories_[0]
         
         # Save model variable to class
         es = EarlyStopping(patience=10)
+
+        if model == 'dropout':
+            model = initialize_class_bert_dropout(X.shape[1])
 
         self.model = model.fit(X,
                                y,
@@ -107,7 +104,7 @@ class Classifier():
                                )
 
 
-    def save():
+    def save(self):
         '''Saves a classifying model'''
         if self.model != None:
             filename = 'finalized_model.sav'
@@ -116,7 +113,7 @@ class Classifier():
             raise Exception('Please fit a model first')
        
 
-    def divide_labels(world):
+    def divide_labels(self, world):
         '''
         Populates the classifier with data for clustering.
 
@@ -160,7 +157,7 @@ class Classifier():
     def predict(self, df):
 
         pre_processed_X = pre_process(df)
-        embedded_X = embedding_string(pre_processed_X)
+        embedded_X = embedding_strings(pre_processed_X)
         prediction = self.model.predict(embedded_X)
 
         # Put into correct labels
@@ -246,11 +243,11 @@ def initialize_class_bert_0():
     return model
 
 
-def initialize_class_bert_dropout():
+def initialize_class_bert_dropout(shape):
     
     model = models.Sequential()
     
-    model.add(layers.Dense(300, activation='relu', input_dim=embeddings_200k.shape[1]))
+    model.add(layers.Dense(300, activation='relu', input_dim=shape))
     model.add(layers.Dropout(0.2))
     
     model.add(layers.Dense(150, activation='relu'))
