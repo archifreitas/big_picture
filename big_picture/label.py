@@ -26,9 +26,9 @@ class Label():
     label: string
         Label correponding to the topic of the class.
 
-    vec_name: string (default: embedding_strings)
+    vec_name: string (default: embedding_string)
         Name of vectorizer to be used for vectorizing. Options:
-        embedding_strings
+        embedding_string
         tf_idf
     
     model_name: string (default: kmeans)
@@ -76,20 +76,20 @@ class Label():
         top_n_words = [[words[j] for j in indices[i]][::-1] for i, label in enumerate(labels)]
         return top_n_words
 
-    def c_tf_idf(self, documents, m):
+    def c_tf_idf(self, documents, m, ngram_range=(1, 1)):
         """
         Vectorizer a dataframe of documents that have been agregated by cluster.
         Parameter 'm' is the total number of articles in the data set
         """
-        t, count = tf_idf(documents)
-        t = t.toarray()
+        count = CountVectorizer(ngram_range=ngram_range, stop_words="english").fit(documents)
+        t = count.transform(documents).toarray()
         w = t.sum(axis=1)
         tf = np.divide(t.T, w)
         sum_t = t.sum(axis=0)
         idf = np.log(np.divide(m, sum_t)).reshape(-1, 1)
-        tf_idf_var = np.multiply(tf, idf)
+        tf_idf = np.multiply(tf, idf)
 
-        return tf_idf_var, count
+        return tf_idf, count
 
     def output_format(self, X, column):
         """
@@ -98,8 +98,6 @@ class Label():
         """
 
         docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
-
-        print(X.head(1))
 
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
 
