@@ -148,11 +148,11 @@ class Classifier():
             # Transform into Label() instances                
             self.labels = {}
 
-            tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-            sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
             for key, value in labels.items():
-                self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=tokenizer, sa_model=sa_model)
+                self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
 
         else:
             raise Exception('Please fit a model first')
