@@ -14,19 +14,16 @@ import pandas as pd
 
 # Arguments to change based on data location and filename
 # Data for loading .csv
-REL_PATH_INPUT = "../raw_data/data_30k/"
-
-# Relevant Columns in .csv to change based on data source
-CONTENT_COL = "content"
-DESCRIPTION_COL = "short_description"
-HEADLINE_COL = "headline"
+REL_PATH_INPUT = "../raw_data/all_the_news/"
 
 # Parameters for pre-processing methods
 # If "all_true" is set to true, we will lematize
 
 # Pre-process:
 # 1 Basic cleaning of data is not optional, create base news+headline column and other basic support data columns
-def pre_process(df,sample=None,
+def pre_process(df,
+                dataset=None,
+                sample=None,
                 all_true=False, 
                 lower_case=False, 
                 no_digits=False,
@@ -36,27 +33,45 @@ def pre_process(df,sample=None,
                 rem_stopwords=False,
                 stem_not_lematize=False,
                 lematize=False):
+    """
+    dataset can either corerspond to "hp" (huffington post .csv(s) dataset) or "all_the_news"
+    which corresponds to kaggle all the news dataset
+    sample corresponds to sample number for testing purposes
+    """
     # column where all "news" content is stored
     news_all_data = "news_all_data"
 
     if sample:
         df = df.sample(sample)
 
+    CONTENT_COL = "content"
     df[CONTENT_COL] = df[CONTENT_COL].replace('\n',' ', regex=True)
 
-    print("read_csv")
+    if dataset == "hp":
+        DESCRIPTION_COL = "short_description"
+        HEADLINE_COL = "headline"
+
+        df[news_all_data] = df[CONTENT_COL] + " " + df[DESCRIPTION_COL] + " " + df[HEADLINE_COL]
+
+        print("merged columns for hp")
     
+    elif dataset == "all_the_news":
+        HEADLINE_COL = "title"
+
+        df[news_all_data] = df[CONTENT_COL] + " " + df[HEADLINE_COL]
+
+        print("merged columns for all_the_news")
+
     # Drop NA's and drop columns where there's only the string "Invalid file"
-    df[news_all_data] = df[CONTENT_COL] + " " + df[DESCRIPTION_COL] + " " + df[HEADLINE_COL]
     df = df.dropna(subset=[news_all_data]).reset_index()
     df = df[df['content'] != "Invalid file"].reset_index(drop=True)
-
+    
     # This creates a column with minor preprocessing wether we need it or not.
     # If all_true is set to all_true=False the news_all_data column in the returned df
     # is going to be equal to this one
     df['minor_preprocessing'] = df[news_all_data]
 
-    print("read_csv")
+    print("minor_preprocessing done")
 
     #import ipdb; ipdb.set_trace()
     # 1.1 lowercase "news + headline" column
@@ -66,28 +81,32 @@ def pre_process(df,sample=None,
     print("lowercase")
 
     # 1.2 Create number of "news + headline" decimals column (we need to find a way to use this in the future)
-    df['nrs_count'] = df[news_all_data].str.count('\d')
+    df['nrs_count'] = df[news_all_data].str.count('[+-]?([0-9]*[.])?[0-9]+')
     df['nrs_count'] = df['nrs_count'].fillna(0)
     df['nrs_count'] = df['nrs_count'].astype(float).astype(int)
 
-    # print("nrs count")
+    print("nrs count")
 
     # 1.3 remove digits from news_all_data column
     if no_digits or all_true:
-        df[news_all_data] = df[news_all_data].apply(lambda x: ''.join(word for word in x if not word.isdigit()))
-
+        #import ipdb; ipdb.set_trace()
+        df[news_all_data] = df[news_all_data].str.replace('[+-]?([0-9]*[.])?[0-9]+', '', regex=True)
+        
+        # apply(lambda x: ''.join(word for word in x if not word.isdigit()))
+        
         print("remove_digits")
 
     # 1.4 Create support data columns for emotions (we need to find a way to use this column in the future)
     df['questions'] = df[news_all_data].str.count('\?')
     df['exclamations'] = df[news_all_data].str.count('\!')
-    df['irony'] = df[news_all_data].map(lambda x: len(re.findall('\?!|\!\?',str(x))))
+    df['irony'] = df[news_all_data].map(lambda x: len(re.findall('\?!|\!\?',x)))
 
-    # print("emotions")
+    print("emotions")
 
     # 1.5 Remove punctuation
     if rem_punct or all_true:
         real_string_punctuation = string.punctuation + "—" + '”' + "’" + "‘" + "…" + '“' + '´' + "`" + "«" + "»"
+        # import ipdb; ipdb.set_trace()
         df[news_all_data] = df[news_all_data].apply(lambda x: ''\
                                             .join(word for word in x if word not in real_string_punctuation))
 
@@ -184,18 +203,21 @@ if __name__ == "__main__":
     from big_picture.get_merged_data import get_data
 
     df1 =  get_data(REL_PATH_INPUT)
-    
-    df2 = pre_process(df1,sample=None,
-                all_true=True, 
-                lower_case=False, 
-                no_digits=False,
-                rem_punct=False,
-                de_emojify=False,
-                rem_stopwords=False,
-                stem_not_lematize=False,
-                lematize=False)
+
+    df2 = pre_process(df1,
+                    dataset="all_the_news",
+                    sample=None,
+                    all_true=True, 
+                    lower_case=False, 
+                    no_digits=False,
+                    rem_punct=False,
+                    de_emojify=False,
+                    tokenize=False,
+                    rem_stopwords=False,
+                    stem_not_lematize=False,
+                    lematize=False)
 
     #for i in range(10):
     #    print(df2.news_all_data.iloc[i])
 
-    df2.to_csv(r'./data/data_30k_all_true.csv', index = False, header=True)
+    df2.to_csv(r'./data/teste_all_the_news.csv', index = False, header=True)
