@@ -6,7 +6,7 @@ from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
 from big_picture.pre_processor import pre_process
-from big_picture.vectorizers import tf_idf, embedding_string
+from big_picture.vectorizers import tf_idf, embedding_strings
 
 class Label():
     """
@@ -26,22 +26,22 @@ class Label():
     label: string
         Label correponding to the topic of the class.
 
-    vec_name: string (default: embedding_string)
+    vec_name: string (default: embedding_strings)
         Name of vectorizer to be used for vectorizing. Options:
-        embedding_string
+        embedding_strings
         tf_idf
     
     model_name: string (default: kmeans)
         Name of model to be used for clustering
     
     """
-    def __init__(self, df, label, vec_name='embedding_string', model_name='kmeans'):
+    def __init__(self, df, label, vec_name='embedding_strings', model_name='kmeans'):
         self.label = label
 
         if vec_name == 'tf_idf':
             vectors, self.vectorizer = tf_idf(df.news_all_data)
-        elif vec_name == 'embedding_string':
-            vectors, self.vectorizer = embedding_string(df.news_all_data,  return_model=True)
+        elif vec_name == 'embedding_strings':
+            vectors, self.vectorizer = embedding_strings(df.news_all_data,  return_model=True)
         else:
             pass
 
