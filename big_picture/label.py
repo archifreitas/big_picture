@@ -35,7 +35,7 @@ class Label():
         Name of model to be used for clustering
     
     """
-    def __init__(self, df, label, *args, vec_name='embedding_strings', model_name='kmeans'):
+    def __init__(self, df, label, vec_name='embedding_strings', model_name='kmeans', **kwargs):
         self.label = label
 
         if vec_name == 'tf_idf':
@@ -51,7 +51,9 @@ class Label():
             self.clusters= self.kmeans(df, 
                                   'news_all_data', 
                                   vectors, 
-                                  clusters=8)
+                                  clusters=1+len(df)//30,
+                                  **kwargs
+                                  )
         else:
             print("No model was found, this may cause problems in the future")
 
@@ -91,7 +93,7 @@ class Label():
 
         return tf_idf, count
 
-    def output_format(self, X, column):
+    def output_format(self, X, column, **kwargs):
         """
         Returns a list of cluster objects with the dataframe and topic
         Optionally the size of each cluster
@@ -124,13 +126,14 @@ class Label():
                 Cluster(
                     cluster,
                     top_n_words[i],
-                    wordcloud
+                    wordcloud,
+                    **kwargs
                 )
             )
 
         return output
 
-    def kmeans(self, X, column, vectors, clusters=8):
+    def kmeans(self, X, column, vectors, clusters=8, **kwargs):
         """
         Kmean model that outputs a list of cluster objects with the dataframe and topic
 
@@ -156,5 +159,5 @@ class Label():
 
         X['topic'] = self.model.labels_
 
-        return self.output_format(X, column)
+        return self.output_format(X, column,**kwargs)
 

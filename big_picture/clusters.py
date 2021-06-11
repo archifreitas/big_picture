@@ -4,7 +4,6 @@ Models to cluster seuqences of articles by topic.
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from transformers import BertTokenizerFast, TFBertForSequenceClassification
 from tensorflow.nn import softmax
 from sklearn.preprocessing import MinMaxScaler
 
@@ -28,13 +27,13 @@ class Cluster():
         Type of model used for clustering
     """
 
-    def __init__(self, cluster, topic, wordcloud):
+    def __init__(self, cluster, topic, wordcloud, **kwargs):
         self.df = cluster[['headline', 'link', 'date']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud
 
-        tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        tokenizer = kwargs.get('tokenizer')
+        model = kwargs.get('sa_model')
 
         texts = list(cluster["news_all_data"])
 

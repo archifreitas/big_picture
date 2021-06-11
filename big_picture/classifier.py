@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import requests
+import pickle
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -20,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
+from transformers import BertTokenizerFast, TFBertForSequenceClassification
 
 # Reports libraries
 from sklearn.metrics import classification_report
@@ -82,8 +83,8 @@ class Classifier():
         # Train classifier with train data
         ohe = OneHotEncoder()
 
-        X = embedding_strings(train[['all_news_data']])
-        y = ohe.fit_transform(train[['label']].toarray())
+        X = embedding_strings(train['news_all_data'])
+        y = ohe.fit_transform(train[['label']]).toarray()
 
         # Save tags for labels to class
         self.labels_tag = ohe.categories_[0]
@@ -91,24 +92,27 @@ class Classifier():
         # Save model variable to class
         es = EarlyStopping(patience=10)
 
+        print(X.shape)
+        print(y.shape)
         if model == 'dropout':
-            model = initialize_class_bert_dropout(X.shape[1])
+            self.model = initialize_class_bert_dropout(X.shape[1], y.shape[1])
 
-        self.model = model.fit(X,
-                               y,
-                               epochs=20,
-                               validation_split=0.25,
-                               batch_size=32,
-                               callbacks=[es],
-                               verbose=1
-                               )
+        self.model.fit(
+                    X,
+                    y,
+                    epochs=20,
+                    validation_split=0.25,
+                    batch_size=32,
+                    callbacks=[es],
+                    verbose=1
+                    )
 
 
     def save(self):
         '''Saves a classifying model'''
         if self.model != None:
             filename = 'finalized_model.sav'
-            pickle.dump(model, open(filename, 'wb'))
+            pickle.dump(self.model, open(filename, 'wb'))
         else:
             raise Exception('Please fit a model first')
        
@@ -125,12 +129,9 @@ class Classifier():
         if self.model != None:
 
             # Pre-process data
-            pre_processed_world = pre_process(world,
-                                            sample=1,
-                                            all_true=True)   
             
             # Set data to predict
-            X = embedding_strings(pre_processed_world)
+            X = embedding_strings(world.news_all_data)
 
             # Predict data
             results = self.model.predict(X)
@@ -147,8 +148,11 @@ class Classifier():
             # Transform into Label() instances                
             self.labels = {}
 
+            tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+
             for key, value in labels.items():
-                self.labels[key] = Label(pre_processed_world.iloc[value, :], self.labels_tag[key])
+                self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=tokenizer, sa_model=sa_model)
 
         else:
             raise Exception('Please fit a model first')
@@ -164,7 +168,7 @@ class Classifier():
 
         labels = []
 
-        for i, result in enumerate(results):
+        for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
                     labels.append(self.labels_tag[j])
@@ -243,7 +247,7 @@ def initialize_class_bert_0():
     return model
 
 
-def initialize_class_bert_dropout(shape):
+def initialize_class_bert_dropout(shape, output):
     
     model = models.Sequential()
     
@@ -255,7 +259,7 @@ def initialize_class_bert_dropout(shape):
     
     model.add(layers.Dense(50, activation='relu'))
     
-    model.add(layers.Dense(16, activation='softmax'))
+    model.add(layers.Dense(output, activation='softmax'))
     
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
