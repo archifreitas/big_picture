@@ -92,6 +92,7 @@ def pre_process(df,
         #import ipdb; ipdb.set_trace()
         df[news_all_data] = df[news_all_data].str.replace('[+-]?([0-9]*[.])?[0-9]+', '', regex=True)
         
+        # outra maneira
         # apply(lambda x: ''.join(word for word in x if not word.isdigit()))
         
         print("remove_digits")
@@ -189,10 +190,13 @@ def pre_process(df,
         total_length = len(tokens)
         unique_words = set(tokens)
         unique_word_length = len(unique_words)
+       
+        if total_length > 0:
+            return unique_word_length / total_length
+        return 0
     
-        return unique_word_length / total_length
-    
-    df[news_all_data] = df[news_all_data].map(lambda x: ' '.join(x))
+    if lematize or stem_not_lematize or rem_stopwords or all_true:
+        df[news_all_data] = df[news_all_data].map(lambda x: ' '.join(x))
     df['vocab richness'] = df[news_all_data].apply(lambda x: vocab_richness(x))
 
     print("vocab_richness")
