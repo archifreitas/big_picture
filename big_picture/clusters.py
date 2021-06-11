@@ -29,7 +29,7 @@ class Cluster():
     """
 
     def __init__(self, cluster, topic, wordcloud):
-        self.df = cluster[['headline', 'link', 'date']]
+        self.df = cluster[['headline', 'link', 'date']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud
 
@@ -50,12 +50,14 @@ class Cluster():
 
         df = pd.DataFrame(my_array, columns = ['Negative','Positive'])
 
-        df['Result'] = df['Positive'] - df['Negative']
+        df['SA'] = df['Positive'] - df['Negative']
 
+        
         # Optional Scalling (we may find out that news are not mostly negatively biased)
         scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
-        scaler.fit(df[['Result']]) # Fit scaler to data
-        self.df['SA'] = scaler.transform(df[['Result']]) # Use scaler to transform data
+        scaler.fit(df[['SA']]) # Fit scaler to data
+        df['norm_SA'] = scaler.transform(df[['SA']]) # Use scaler to transform data
+        self.df = pd.concat([self.df,df],axis=1)
     
     def show_wordcloud(self, size=8):
         """
