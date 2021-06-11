@@ -45,7 +45,7 @@ def pre_process(df,
         df = df.sample(sample)
 
     CONTENT_COL = "content"
-    df[CONTENT_COL] = df[CONTENT_COL].replace('\n',' ', regex=True)
+    df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
 
     if dataset == "hp":
         DESCRIPTION_COL = "short_description"
