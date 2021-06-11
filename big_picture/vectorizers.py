@@ -9,7 +9,7 @@ import umap
 from sentence_transformers import SentenceTransformer
 
 
-def embedding_strings(strings, progress_bar=False):
+def embedding_strings(strings, progress_bar=False, return_model=False):
     '''Embedding of the instance string 
     represented by its title and content.
     Note: Receives an array of strings, or a single string'''
