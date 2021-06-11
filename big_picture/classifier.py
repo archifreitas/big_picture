@@ -10,9 +10,9 @@ from big_pciture.label import Label
 # General libraries
 import pandas as pd
 import numpy as np
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-# import requests
+import matplotlib.pyplot as plt
+import seaborn as sns
+import requests
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -21,6 +21,10 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
+
+# Reports libraries
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
 
 # Label dictionary
 labels_dict = {0: 'Activism',
@@ -58,16 +62,8 @@ class Classifier():
         self.threshold = threshold
         self.model = None
         self.labels = None
-    
-    # def classifying_threshold(self, predictions,threshold):
-    #     '''Labels prediction depending on probability distribution of the classes'''
-    #     val_dict = labels_dict
-    #     labels = []
-    #     for idx, val in enumerate(predictions):
-    #         if val > threshold:
-    #             labels.append(val_dict[idx])
-    #     return labels
-    
+
+
     def fit(train, model=initialize_class_bert_dropout()):
         '''
         Generate a model and fit it to the train_data.
@@ -101,7 +97,7 @@ class Classifier():
         # Save model variable to class
         es = EarlyStopping(patience=10)
 
-        self.model = model.fit(embeddings_200k,
+        self.model = model.fit(X,
                                y,
                                epochs=20,
                                validation_split=0.25,
@@ -109,6 +105,7 @@ class Classifier():
                                callbacks=[es],
                                verbose=1
                                )
+
 
     def save():
         '''Saves a classifying model'''
@@ -118,8 +115,16 @@ class Classifier():
         else:
             raise Exception('Please fit a model first')
        
+
     def divide_labels(world):
-        '''Populates the classifier with data for clustering'''
+        '''
+        Populates the classifier with data for clustering.
+
+        Parameters
+        ----------
+        world : df
+            DataFrame to predict labels from and generate world of clusters.
+        '''
         if self.model != None:
 
             # Pre-process data
@@ -131,7 +136,7 @@ class Classifier():
             X = embedding_strings(pre_processed_world)
 
             # Predict data
-            results = self.model.predict(pre_processed_world)
+            results = self.model.predict(X)
 
             # Divide into labels
             labels = {key: [] for key in labels_dict.keys()}
@@ -151,6 +156,7 @@ class Classifier():
         else:
             raise Exception('Please fit a model first')
     
+
     def predict(self, df):
 
         pre_processed_X = pre_process(df)
@@ -173,15 +179,51 @@ class Classifier():
 
         return output
 
+    ### Classification reports
 
-### Classification reports
+    def reports(self, y_true, report=1):
+        '''
+        Generate a model and fit it to the train_data.
 
-def summary_report():
-    pass
+        Parameters
+        ----------
+        y_true : pd.series
+            Panda Series containing the y_true used for training the model.
+
+        report : int
+            Default value is 1, which will print the classification report.
+            Use 0 to plot the confusion matrix for the different labels.
+        '''
+
+        if self.model != None:
+
+            classes = np.argmax(self.model.predict(X), axis=-1)
+            val_dict = {}
+
+            for idx, val in enumerate(self.labels_tag):
+                val_dict[val] = int(idx)
+
+            y_true = y_true.map(val_dict)    
+
+            # Classification report
+            if report:
+                return print(classification_report(y_true, self.classes))
+
+            # Confusion Matrix plot
+            else:
+                cm_array = confusion_matrix(y_true, self.classes)
+
+                df_cm = pd.DataFrame(cm_array, 
+                                     index = [i for i in labels],
+                                     columns = [i for i in labels])
+                plt.figure(figsize = (15,8))
+                return sns.heatmap(df_cm, annot=True)
+
+        else:
+            raise Exception('Please fit a model first')
+        
 
 
-def summary_confusion_matrix():
-    pass
 
 ### Models in use
 
