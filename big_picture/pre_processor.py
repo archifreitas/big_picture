@@ -196,6 +196,51 @@ def pre_process(df,
     df['vocab richness'] = df[news_all_data].apply(lambda x: vocab_richness(x))
 
     print("vocab_richness")
+
+    # 1.11 Add column label with translated categories
+    my_dict = {'CRIME': 'Crime',
+               'ENTERTAINMENT': 'Entertainment',
+               'WORLD NEWS': 'World News',
+               'IMPACT': 'Other',
+               'POLITICS': 'Politics',
+               'WEIRD NEWS': 'Other',
+               'BLACK VOICES': 'Activism',
+               'WOMEN': 'Entertainment',
+               'COMEDY': 'Entertainment',
+               'QUEER VOICES': 'Activism',
+               'SPORTS': 'Sports',
+               'BUSINESS': 'Business',
+               'TRAVEL': 'Culture',
+               'MEDIA': 'Media',
+               'TECH': 'Technology',
+               'RELIGION': 'Religion',
+               'SCIENCE': 'Science',
+               'LATINO VOICES': 'Activism',
+               'EDUCATION': 'Education',
+               'COLLEGE': 'Education',
+               'PARENTS': 'Other',
+               'ARTS & CULTURE': 'Culture',
+               'STYLE': 'Trends',
+               'GREEN': 'Activism',
+               'TASTE': 'Culture',
+               'HEALTHY LIVING': 'Health',
+               'THE WORLDPOST': 'World News',
+               'GOOD NEWS': 'Other',
+               'WORLDPOST': 'World News',
+               'FIFTY': 'Other',
+               'ARTS': 'Culture',
+               'WELLNESS': 'Health',
+               'PARENTING': 'Other',
+               'HOME & LIVING': 'Trends',
+               'STYLE & BEAUTY': 'Trends',
+               'DIVORCE': 'Other',
+               'WEDDINGS': 'Other',
+               'FOOD & DRINK': 'Culture',
+               'MONEY': 'Other',
+               'ENVIRONMENT': 'Activism',
+               'CULTURE & ARTS': 'Culture'}
+
+    df['label'] = df.category.map(lambda x: my_dict[x])
   
     return df
 
