@@ -2,11 +2,11 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 #import hdbscan as hdb
 from sklearn.cluster import KMeans
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
 from big_picture.pre_processor import pre_process
-from big_picture.vectorizers import tf_idf
+from big_picture.vectorizers import tf_idf, embedding_string
 
 class Label():
     """
@@ -26,29 +26,29 @@ class Label():
     label: string
         Label correponding to the topic of the class.
 
-    vec_name: string (default: tf_idf)
-        Name of vectorizer to be used for vectorizing
+    vec_name: string (default: embedding_string)
+        Name of vectorizer to be used for vectorizing. Options:
+        embedding_string
+        tf_idf
     
     model_name: string (default: kmeans)
         Name of model to be used for clustering
     
     """
-    def __init__(self, df, label, vec_name='tf_idf', model_name='kmeans'):
+    def __init__(self, df, label, vec_name='embedding_string', model_name='kmeans'):
         self.label = label
 
-        pre_processed_df = pre_process(df,
-                                sample=1,
-                                all_true=True)
-
         if vec_name == 'tf_idf':
-            vectors, self.vectorizer = tf_idf(pre_processed_df.news_all_data)
+            vectors, self.vectorizer = tf_idf(df.news_all_data)
+        elif vec_name == 'embedding_string':
+            vectors, self.vectorizer = embedding_string(df.news_all_data,  return_model=True)
         else:
             pass
 
         self.model = None
         self.sizes = None
         if model_name == 'kmeans':
-            self.clusters= self.kmeans(pre_processed_df, 
+            self.clusters= self.kmeans(df, 
                                   'news_all_data', 
                                   vectors, 
                                   clusters=8)
@@ -76,20 +76,20 @@ class Label():
         top_n_words = [[words[j] for j in indices[i]][::-1] for i, label in enumerate(labels)]
         return top_n_words
 
-    def c_tf_idf(self, documents, m, ngram_range=(1, 1)):
+    def c_tf_idf(self, documents, m):
         """
         Vectorizer a dataframe of documents that have been agregated by cluster.
         Parameter 'm' is the total number of articles in the data set
         """
-        count = CountVectorizer(ngram_range=ngram_range, stop_words="english").fit(documents)
-        t = count.transform(documents).toarray()
+        t, count = tf_idf(documents)
+        t = t.toarray()
         w = t.sum(axis=1)
         tf = np.divide(t.T, w)
         sum_t = t.sum(axis=0)
         idf = np.log(np.divide(m, sum_t)).reshape(-1, 1)
-        tf_idf = np.multiply(tf, idf)
+        tf_idf_var = np.multiply(tf, idf)
 
-        return tf_idf, count
+        return tf_idf_var, count
 
     def output_format(self, X, column):
         """
@@ -98,6 +98,8 @@ class Label():
         """
 
         docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
+
+        print(X.head(1))
 
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
 

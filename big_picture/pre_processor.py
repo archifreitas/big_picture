@@ -158,7 +158,7 @@ def pre_process(df,sample=None,
             return tag_dict.get(tag, wordnet.NOUN)
 
         lemmatizer = WordNetLemmatizer()
-        nltk.download('averaged_perceptron_tagger')
+        nltk.download('popular')
         df[news_all_data] = df[news_all_data]\
                                     .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])
 
