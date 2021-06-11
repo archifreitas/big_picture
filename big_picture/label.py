@@ -35,7 +35,7 @@ class Label():
         Name of model to be used for clustering
     
     """
-    def __init__(self, df, label, vec_name='embedding_strings', model_name='kmeans'):
+    def __init__(self, df, label, *args, vec_name='embedding_strings', model_name='kmeans'):
         self.label = label
 
         if vec_name == 'tf_idf':
