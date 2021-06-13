@@ -64,7 +64,7 @@ class Classifier():
         self.labels = None
 
 
-    def fit(train, model=initialize_class_bert_dropout()):
+    def fit(self, train, printed=False, model=initialize_class_bert_dropout()):
         '''
         Generate a model and fit it to the train_data.
 
@@ -81,9 +81,7 @@ class Classifier():
         '''
 
         # Pre-process data
-        pre_processed_train = pre_process(train,
-                                          sample=1,
-                                          all_true=True)                        
+        pre_processed_train = pre_process(data, printed=True, params=val_dict)                      
         
         # Train classifier with train data
         ohe = OneHotEncoder()
@@ -107,7 +105,7 @@ class Classifier():
                                )
 
 
-    def save():
+    def save(self):
         '''Saves a classifying model'''
         if self.model != None:
             filename = 'finalized_model.sav'
@@ -116,7 +114,7 @@ class Classifier():
             raise Exception('Please fit a model first')
        
 
-    def divide_labels(world):
+    def divide_labels(self, world):
         '''
         Populates the classifier with data for clustering.
 
