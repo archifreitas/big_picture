@@ -2,12 +2,11 @@
 Models to cluster seuqences of articles by topic.
 """
 
-import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.feature_extraction.text import CountVectorizer
-import hdbscan as hdb
-from sklearn.cluster import KMeans
-from wordcloud import WordCloud, STOPWORDS
+from transformers import BertTokenizerFast, TFBertForSequenceClassification
+from tensorflow.nn import softmax
+from sklearn.preprocessing import MinMaxScaler
 
 class Cluster():
     """
@@ -22,151 +21,49 @@ class Cluster():
     topic : list
         List of words describing cluster
 
-    combined_text : string
-        Agregated string with all the text in a cluster of articles
+    wordcloud : wordcloud object
+        Wordcloud object ready to be shown with matplotlib
+
+    model_name : string (default: kmeans)
+        Type of model used for clustering
     """
 
     def __init__(self, cluster, topic, wordcloud):
-        self.df = cluster
+        self.df = cluster[['headline', 'link', 'date']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud
+
+        tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+
+        texts = list(cluster["news_all_data"])
+
+        encoded_input = tokenizer(texts, 
+                            return_tensors='tf',
+                            padding=True,
+                            max_length=500, #!!!!!!!!!!!!!!!!might need to change
+                            truncation=True)
+        
+        output = model(encoded_input)
+
+        my_array = softmax(output.logits).numpy()
+
+        df = pd.DataFrame(my_array, columns = ['Negative','Positive'])
+
+        df['SA'] = df['Positive'] - df['Negative']
+
+        
+        # Optional Scalling (we may find out that news are not mostly negatively biased)
+        scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
+        scaler.fit(df[['SA']]) # Fit scaler to data
+        df['norm_SA'] = scaler.transform(df[['SA']]) # Use scaler to transform data
+        self.df = pd.concat([self.df,df],axis=1)
     
     def show_wordcloud(self, size=8):
+        """
+        Shows wordcloud using matplotlib
+        """
         plt.imshow(self.wordcloud)
         plt.tight_layout(pad = 0)
         plt.show()
-    
 
-def extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=20):
-    """
-    Extracts the top words of a topics.
-    Takes a dataframe with aggregated articles grouped by topic 
-    and the information ontained through tf-idf vectorization of it.
-    """
-    words = count.get_feature_names()
-    labels = list(docs_per_topic.topic)
-    tf_idf_transposed = tf_idf.T
-    indices = tf_idf_transposed.argsort()[:, -n:]
-    top_n_words = [[words[j] for j in indices[i]][::-1] for i, label in enumerate(labels)]
-    return top_n_words
-
-def extract_cluster_sizes(df):
-    """
-    Extracts the cluster sizes of each cluster.
-    Takes a dataframe with a column 'topic' asigning a topic number to each cluster.
-    """
-    topic_sizes = (df.groupby(['topic'])
-                     .content
-                     .count()
-                     .reset_index()
-                     .rename({"topic": "topic", "content": "Size"}, axis='columns')
-                     .sort_values("Size", ascending=False))
-    return topic_sizes
-
-def c_tf_idf(documents, m, ngram_range=(1, 1)):
-    """
-    Vectorizer a dataframe of documents that have been agregated by cluster.
-    Parameter 'm' is the total number of articles in the data set
-    """
-    count = CountVectorizer(ngram_range=ngram_range, stop_words="english").fit(documents)
-    t = count.transform(documents).toarray()
-    w = t.sum(axis=1)
-    tf = np.divide(t.T, w)
-    sum_t = t.sum(axis=0)
-    idf = np.log(np.divide(m, sum_t)).reshape(-1, 1)
-    tf_idf = np.multiply(tf, idf)
-
-    return tf_idf, count
-
-def output_format(X, column, return_cluster_sizes):
-    """
-    Returns a list of cluster objects with the dataframe and topic
-    Optionally the size of each cluster
-    """
-
-    docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
-
-    tf_idf, count = c_tf_idf(docs_per_topic[column].values, m=len(X))
-
-    top_n_words = extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=10)
-
-    clusters = []
-
-    for topic in X['topic'].unique():
-        clusters.append((X[X.topic == topic]))
-    
-    output = []
-    for i, cluster in enumerate(clusters):
-        wordcloud = WordCloud(width = 800, height = 800,
-                    background_color ='white',
-                    min_font_size = 10).generate(docs_per_topic[column].iloc[i])
-        output.append(
-            Cluster(
-                cluster,
-                top_n_words[i],
-                wordcloud
-            )
-        )
-
-    if return_cluster_sizes:
-        return output, extract_cluster_sizes(X)
-    return output
-
-def kmeans(X, column, vectors, clusters=8, return_cluster_sizes=False):
-    """
-    Kmean model that outputs a list of cluster objects with the dataframe and topic
-
-    Parameters
-    ----------
-    X : df
-        Data Frame of articles
-
-    column : string
-        the preproccessed column name
-
-    vectors : string
-        vectorized data of the preproccessed column
-
-    clusters : int
-        intended number of clusters
-
-    return_cluster_sizes : bolean
-        Optionally return the size of each cluster
-    """
-
-    model = KMeans(n_clusters=clusters).fit(vectors)
-
-    X['topic'] = model.labels_
-
-    return output_format(X,column, return_cluster_sizes=return_cluster_sizes)
-
-def hdbscan(X, column, vectors, min_cluster_size=5, return_cluster_sizes=False):
-    """
-    Hbdscan clustering model that outputs a list of cluster objects with the dataframe and topic
-
-    Parameters
-    ----------
-    X : df
-        Data Frame of articles
-
-    column : string
-        the preproccessed column name
-
-    vectors : string
-        vectorized data of the preproccessed column
-
-    min_cluster_size : int
-        minimum cluster size of the clustering model
-        datapoints can still be classified as outliers (clusters of 1)
-
-    return_cluster_sizes : bolean
-        Optionally return the size of each cluster
-    """
-
-    model = hdb.HDBSCAN(min_cluster_size=min_cluster_size,
-                          metric='euclidean',                      
-                          cluster_selection_method='eom').fit(vectors)
-
-    X['topic'] = model.labels_
-
-    return output_format(X,column, return_cluster_sizes=return_cluster_sizes)

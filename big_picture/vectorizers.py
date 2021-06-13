@@ -1,9 +1,23 @@
 """
-Machine learning an deep learning vectorizers.
+Machine learning and deep learning vectorizers.
 """
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 import umap
+
+# Embedding libraries
+from sentence_transformers import SentenceTransformer
+
+
+def embedding_strings(strings, progress_bar=False, return_model=False):
+    '''Embedding of the instance string 
+    represented by its title and content.
+    Note: Receives an array of strings, or a single string'''
+    model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+    embeddings = model.encode(strings, show_progress_bar=progress_bar)
+    if return_model:
+        return embeddings, model
+    return embeddings
 
 def tf_idf(X):
     """
@@ -12,7 +26,7 @@ def tf_idf(X):
 
     vectorizer = TfidfVectorizer()
     vectors = vectorizer.fit_transform(X)
-    return vectors
+    return vectors, vectorizer
 
 def reduce_dimensions(data, dimensions, n_neigbors=15):
     """

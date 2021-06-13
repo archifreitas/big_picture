@@ -10,6 +10,8 @@ pandas
 scikit-learn
 hdbscan
 tensorflow
+sentence_transformers
+umap
 
 # tests/linter
 black
@@ -29,13 +31,12 @@ six>=1.14
 joblib
 memoized-property
 termcolor
+wordcloud
 
 # preprocessing
 ipywidgets
 nltk
 transformers
-string
-re
 
 # scraping
 random
