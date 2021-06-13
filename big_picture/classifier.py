@@ -124,7 +124,7 @@ class Classifier():
             raise Exception('Please fit a model first')
        
 
-    def divide_labels(self, world):
+    def divide_labels(self, world, source='web', params=None, sample=None, printed=False):
         '''
         Populates the classifier with data for clustering.
 
