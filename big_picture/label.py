@@ -39,9 +39,9 @@ class Label():
         self.label = label
 
         if vec_name == 'tf_idf':
-            vectors, self.vectorizer = tf_idf(df.news_all_data)
+            vectors, self.vectorizer = tf_idf(df.pre_processed_text)
         elif vec_name == 'embedding_strings':
-            vectors, self.vectorizer = embedding_strings(df.news_all_data,  return_model=True)
+            vectors, self.vectorizer = embedding_strings(df.pre_processed_text,  return_model=True)
         else:
             pass
 
@@ -49,7 +49,7 @@ class Label():
         self.sizes = None
         if model_name == 'kmeans':
             self.clusters= self.kmeans(df, 
-                                  'news_all_data', 
+                                  'pre_processed_text', 
                                   vectors, 
                                   clusters=1+len(df)//30,
                                   **kwargs

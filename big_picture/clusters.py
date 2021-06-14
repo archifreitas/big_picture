@@ -35,7 +35,7 @@ class Cluster():
         tokenizer = kwargs.get('tokenizer')
         model = kwargs.get('sa_model')
 
-        texts = list(cluster["news_all_data"])
+        texts = list(cluster["pre_processed_text"])
 
         encoded_input = tokenizer(texts, 
                             return_tensors='tf',
