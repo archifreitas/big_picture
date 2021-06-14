@@ -87,7 +87,7 @@ class Classifier():
             train, 
             source, 
             params, 
-            ample, 
+            sample, 
             printed)
 
         X = embedding_strings(train['pre_processed_text'])

@@ -17,7 +17,7 @@ import pandas as pd
 REL_PATH_INPUT = "../raw_data/all_the_news/"
 
 # Main function
-def pre_process(df, source, params=None, sample=None, printed=False):
+def pre_process(df, df_source, params=None, sample=None, printed=False):
     """
     Main function to pre-process data. 
 
@@ -58,7 +58,8 @@ def pre_process(df, source, params=None, sample=None, printed=False):
     if sample:
         df = df.sample(sample)
     
-    pp_dict = {'cat_mapping': True,
+    pp_dict = {'data_prep': True,
+               'cat_mapping': True,
                'count_numbers': True,
                'check_emotions': True,
                'vocab_richness': True,
@@ -76,7 +77,7 @@ def pre_process(df, source, params=None, sample=None, printed=False):
             pp_dict[key] = val
     
     # Prep columns for data pre_processing
-    df = data_prep(df, source, printed)
+    df = data_prep(df, source=df_source, printed=printed)
     df['minor_preprocessing'] = df[pre_processed_text]
     df = pp_cat_mapping(df, printed, execute=pp_dict['cat_mapping'])
     df = df.dropna(subset=[pre_processed_text]).reset_index(drop=True)
