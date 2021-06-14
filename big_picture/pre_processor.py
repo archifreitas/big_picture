@@ -1,11 +1,11 @@
 # Imports
 import nltk
-import re # regex
+import re
 import string 
-from nltk.corpus import stopwords # remove stopwords
-from nltk.tokenize import word_tokenize # tokenizing
-from nltk.stem.snowball import SnowballStemmer # stemming (improved version of PorterStemmer)(optional)
-from nltk.stem import WordNetLemmatizer # lematizing with POS tags (optional)
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize 
+from nltk.stem.snowball import SnowballStemmer
+from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 
 # from sklearn.feature_extraction.text import TfidfVectorizer # in case vectorizer is added here 
@@ -16,188 +16,141 @@ import pandas as pd
 # Data for loading .csv
 REL_PATH_INPUT = "../raw_data/all_the_news/"
 
-# Parameters for pre-processing methods
-# If "all_true" is set to true, we will lematize
-
-# Pre-process:
-# 1 Basic cleaning of data is not optional, create base news+headline column and other basic support data columns
-def pre_process(df,
-                dataset=None,
-                sample=None,
-                all_true=False, 
-                lower_case=False, 
-                no_digits=False,
-                rem_punct=False,
-                de_emojify=False,
-                tokenize=False,
-                rem_stopwords=False,
-                stem_not_lematize=False,
-                lematize=False):
+# Main function
+def pre_process(df, source='web', params=None, sample=None, printed=False):
     """
-    dataset can either corerspond to "hp" (huffington post .csv(s) dataset) or "all_the_news"
-    which corresponds to kaggle all the news dataset
-    sample corresponds to sample number for testing purposes
-    """
-    # column where all "news" content is stored
-    news_all_data = "news_all_data"
+    Main function to pre-process data. 
 
+    Parameters
+        ----------
+        df : DataFrame
+            DataFrame containing the data to pre_process.
+
+        source : string
+            Describes the source of data to be pre_processed.
+            The default is 'web. Can also be used 'prepared'.
+        
+        params : dict
+            A dictionary contain some or all of the following keywords:
+                - 'cat_mapping': True,
+                - 'count_numbers': True,
+                - 'check_emotions': True,
+                - 'vocab_richness': True,
+                - 'remove_digits': True,
+                - 'remove_punctuation': True,
+                - 'remove_emojis': True,
+                - 'tokenize': True,
+                - 'stopwords': True,
+                - 'lemmatize': True,
+                - 'stemming': False
+        
+        sample : float
+            Default value is None. Returns a sample of the whole dataset.
+
+        printed : boolean
+            Turn on to receive information on the pre_processing data process.
+    """
+    # Column name for pre_processed data
+    pre_processed_text = "pre_processed_text"
+    
+     
+    # For sampling
     if sample:
         df = df.sample(sample)
+    
+    pp_dict = {'cat_mapping': True,
+               'count_numbers': True,
+               'check_emotions': True,
+               'vocab_richness': True,
+               'remove_digits': True,
+               'remove_punctuation': True,
+               'remove_emojis': True,
+               'tokenize': True,
+               'stopwords': True,
+               'lemmatize': True,
+               'stemming': False}
+    
+    #print(params)
+    if params:
+        for key, val in params.items():
+            pp_dict[key] = val
+    
+    # Prep columns for data pre_processing
+    df = data_prep(df, source, printed)
+    df['minor_preprocessing'] = df[pre_processed_text]
+    df = pp_cat_mapping(df, printed, execute=pp_dict['cat_mapping'])
+    df = df.dropna(subset=[pre_processed_text]).reset_index(drop=True)
+    
+    if printed:
+        print("-------------------------")
+        print("Minor pre-processing done")
+        print("-------------------------")
+    
+    # Add new columns for label and other features
+    df = pp_count_numbers(df, printed, execute=pp_dict['count_numbers'])
+    df = pp_check_emotions(df, printed, execute=pp_dict['check_emotions'])
+    df = pp_vocab_richness(df, printed, execute=pp_dict['vocab_richness'])
+    
+    if printed:
+        print("-------------------------")
+        print("New features added")
+        print("-------------------------")
+    
+    # Remove excess data
+    df = pp_remove_digits(df, printed, execute=pp_dict['remove_digits'])
+    df = pp_remove_punctuation(df, printed, execute=pp_dict['remove_punctuation'])
+    df = pp_remove_emojis(df, printed, execute=pp_dict['remove_emojis'])
+    
+    if printed:
+        print("-------------------------")
+        print("Excess data removed")
+        print("-------------------------")
 
-    CONTENT_COL = "content"
-    df[CONTENT_COL] = df[CONTENT_COL].replace('\n',' ', regex=True)
+    
+    # Divide data and pre_process
+    df = pp_tokenize(df, printed, execute=pp_dict['tokenize'])
+    df = pp_stopwords(df, printed, execute=pp_dict['stopwords'])
+    df = pp_lemmatizing(df, printed, execute=pp_dict['lemmatize'])
+    df = pp_stemming(df, printed, execute=pp_dict['stemming'])
+    
+    if printed:
+        print("-------------------------")
+        print("Data pre-processed")
+        print("-------------------------")
 
-    if dataset == "hp":
+    return df
+
+# Data cleaning
+def data_prep(df, source, printed=False):
+    
+    if printed:
+        print('Preparing pre_processed_text column')
+    
+    if source == 'web':
+        CONTENT_COL = "content"
         DESCRIPTION_COL = "short_description"
         HEADLINE_COL = "headline"
+        
+        
+        df = df.drop(columns=['Unnamed: 0', 'index'])
+        df = df[df['content'] != "Invalid file"].reset_index(drop=True)
+        df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
+        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[DESCRIPTION_COL] + " " + df[CONTENT_COL]
 
-        df[news_all_data] = df[CONTENT_COL] + " " + df[DESCRIPTION_COL] + " " + df[HEADLINE_COL]
-
-        print("merged columns for hp")
+        
+        return df
     
-    elif dataset == "all_the_news":
+    elif source == 'prepared':
         HEADLINE_COL = "title"
-
-        df[news_all_data] = df[CONTENT_COL] + " " + df[HEADLINE_COL]
-
-        print("merged columns for all_the_news")
-
-    # Drop NA's and drop columns where there's only the string "Invalid file"
-    df = df.dropna(subset=[news_all_data]).reset_index()
-    df = df[df['content'] != "Invalid file"].reset_index(drop=True)
-    
-    # This creates a column with minor preprocessing wether we need it or not.
-    # If all_true is set to all_true=False the news_all_data column in the returned df
-    # is going to be equal to this one
-    df['minor_preprocessing'] = df[news_all_data]
-
-    print("minor_preprocessing done")
-
-    #import ipdb; ipdb.set_trace()
-    # 1.1 lowercase "news + headline" column
-    if lower_case or all_true: 
-        df[news_all_data] = df[news_all_data].str.lower()
-
-    print("lowercase")
-
-    # 1.2 Create number of "news + headline" decimals column (we need to find a way to use this in the future)
-    df['nrs_count'] = df[news_all_data].str.count('[+-]?([0-9]*[.])?[0-9]+')
-    df['nrs_count'] = df['nrs_count'].fillna(0)
-    df['nrs_count'] = df['nrs_count'].astype(float).astype(int)
-
-    print("nrs count")
-
-    # 1.3 remove digits from news_all_data column
-    if no_digits or all_true:
-        #import ipdb; ipdb.set_trace()
-        df[news_all_data] = df[news_all_data].str.replace('[+-]?([0-9]*[.])?[0-9]+', '', regex=True)
+        CONTENT_COL = "content"
         
-        # apply(lambda x: ''.join(word for word in x if not word.isdigit()))
+        df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
+        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[CONTENT_COL]
         
-        print("remove_digits")
+        return df
 
-    # 1.4 Create support data columns for emotions (we need to find a way to use this column in the future)
-    df['questions'] = df[news_all_data].str.count('\?')
-    df['exclamations'] = df[news_all_data].str.count('\!')
-    df['irony'] = df[news_all_data].map(lambda x: len(re.findall('\?!|\!\?',x)))
+def pp_cat_mapping(df, printed=False, execute=False):
 
-    print("emotions")
-
-    # 1.5 Remove punctuation
-    if rem_punct or all_true:
-        real_string_punctuation = string.punctuation + "—" + '”' + "’" + "‘" + "…" + '“' + '´' + "`" + "«" + "»"
-        # import ipdb; ipdb.set_trace()
-        df[news_all_data] = df[news_all_data].apply(lambda x: ''\
-                                            .join(word for word in x if word not in real_string_punctuation))
-
-        print("punctuation")
-
-    # 1.6 Remove emojis
-    if de_emojify or all_true:
-        def deEmojify(text):
-            regrex_pattern = re.compile(pattern = "["
-                u"\U0001F600-\U0001F64F"  # emoticons
-                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-                u"\U0001F680-\U0001F6FF"  # transport & map symbols
-                u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                u"\U00002500-\U00002BEF"  # chinese char
-                u"\U00002702-\U000027B0"
-                u"\U00002702-\U000027B0"
-                u"\U000024C2-\U0001F251"
-                u"\U0001f926-\U0001f937"
-                u"\U00010000-\U0010ffff"
-                u"\u2640-\u2642" 
-                u"\u2600-\u2B55"
-                u"\u200d"
-                u"\u23cf"
-                u"\u23e9"
-                u"\u231a"
-                u"\ufe0f"  # dingbats
-                u"\u3030"
-                                "]+", flags = re.UNICODE)
-            return regrex_pattern.sub(r'',text)
-        
-        df[news_all_data] = df["news_all_data"].apply(lambda x: deEmojify(x))
-
-    print("de_emojify")
-
-    if tokenize or all_true:
-    # 1.7 Tokenize
-        df[news_all_data] = df[news_all_data].apply(lambda x: word_tokenize(x))
-
-    print("tokenize")
-
-    # 1.8 Remove stopwords
-    if rem_stopwords or all_true:
-        stop_words = set(stopwords.words('english'))
-        df[news_all_data] = df[news_all_data]\
-                                .apply(lambda x: [word for word in x if not word in stop_words])
-
-        print("stopwords")
-
-    # 1.9a Stemming (optional)
-    if stem_not_lematize:
-        stemmer = SnowballStemmer(language='english')
-        
-        df[news_all_data] = df[news_all_data]\
-                                    .apply(lambda x: [stemmer.stem(word) for word in x])
-
-        print("stemming")
-
-    # 1.9b Lematizing with POS tags in english (optional)
-    if lematize or (all_true and not stem_not_lematize):
-        def get_wordnet_pos(word):
-            """Map POS tag to first character lemmatize() accepts"""
-            tag = nltk.pos_tag([word])[0][1][0].upper()
-            tag_dict = {"J": wordnet.ADJ,
-                        "N": wordnet.NOUN,
-                        "V": wordnet.VERB,
-                        "R": wordnet.ADV}
-
-            return tag_dict.get(tag, wordnet.NOUN)
-
-        lemmatizer = WordNetLemmatizer()
-        nltk.download('popular')
-        df[news_all_data] = df[news_all_data]\
-                                    .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])
-
-        print("lematizing")
-
-   # 1.10 Adding vocab richness column (we need to find a way to use this column in the future)
-    def vocab_richness(text):
-        tokens = word_tokenize(text)
-        total_length = len(tokens)
-        unique_words = set(tokens)
-        unique_word_length = len(unique_words)
-    
-        return unique_word_length / total_length
-    
-    df[news_all_data] = df[news_all_data].map(lambda x: ' '.join(x))
-    df['vocab richness'] = df[news_all_data].apply(lambda x: vocab_richness(x))
-
-    print("vocab_richness")
-
-    # 1.11 Add column label with translated categories
     my_dict = {'CRIME': 'Crime',
                'ENTERTAINMENT': 'Entertainment',
                'WORLD NEWS': 'World News',
@@ -239,30 +192,191 @@ def pre_process(df,
                'MONEY': 'Other',
                'ENVIRONMENT': 'Activism',
                'CULTURE & ARTS': 'Culture'}
+    
+    if execute:
+        df['label'] = df.category.map(lambda x: my_dict[x])
 
-    df['label'] = df.category.map(lambda x: my_dict[x])
-  
+        if printed:
+            print('Mapping labels')
+
+        return df
+    return df    
+
+# Add features
+def pp_count_numbers(df, printed=False, execute=False):
+    '''Create number of "news + headline" decimals column'''
+    
+    if execute:
+        df['nrs_count'] = df['pre_processed_text'].str.count('[+-]?([0-9]*[.])?[0-9]+')
+        df['nrs_count'] = df['nrs_count'].fillna(0)
+        df['nrs_count'] = df['nrs_count'].astype(float).astype(int)
+
+        if printed:
+            print('Counting numbers')
+
+        return df
     return df
 
+def pp_check_emotions(df, printed=False, execute=False):
+    '''Counts types of entonation'''
+    
+    if execute:
+        df['questions'] = df['pre_processed_text'].str.count('\?')
+        df['exclamations'] = df['pre_processed_text'].str.count('\!')
+        df['irony'] = df['pre_processed_text'].map(lambda x: len(re.findall('\?!|\!\?',x)))
+
+        if printed:
+            print('Revealing emotions')
+
+        return df
+    return df  
+
+def pp_vocab_richness(df, printed=False, execute=False):
+
+    def vocab_richness(text):
+        tokens = word_tokenize(text)
+        total_length = len(tokens)
+        unique_words = set(tokens)
+        unique_word_length = len(unique_words)
+       
+        if total_length > 0:
+            return unique_word_length / total_length
+        return 0
+    
+    if execute:
+        df['vocab_richness'] = df['pre_processed_text'].apply(lambda x: vocab_richness(x))
+
+        if printed:
+            print('Analyzing vocabulary bank account!')
+
+        return df
+    return df
+
+# Pre_process data
+def pp_tokenize(df, printed=False, execute=False):
+    
+    if execute:
+        df['pre_processed_text'] = df['pre_processed_text'].apply(lambda x: word_tokenize(x))
+
+        if printed:
+            print('Tokenizing')
+
+        return df
+    return df
+
+def pp_stopwords(df, printed=False, execute=False, language='english'):
+    
+    if execute:
+        stop_words = set(stopwords.words(language))
+        df['pre_processed_text'] = df['pre_processed_text']\
+                                .apply(lambda x: [word for word in x if not word in stop_words])
+
+        if printed:
+            print('Checking for stopwords')
+
+        return df
+    return df  
+
+def pp_stemming(df, printed=False, execute=False, language='english'):
+    
+    if execute:
+        stemmer = SnowballStemmer(language=language)
+        
+        df['pre_processed_text'] = df['pre_processed_text']\
+                                    .apply(lambda x: [stemmer.stem(word) for word in x])
+
+        if printed:
+            print('Generating branches')
+
+        return df
+    return df
+
+def pp_lemmatizing(df, printed=False, execute=False, upgrade=False):
+    
+    def get_wordnet_pos(word):
+            """Map POS tag to first character lemmatize() accepts"""
+            tag = nltk.pos_tag([word])[0][1][0].upper()
+            tag_dict = {"J": wordnet.ADJ,
+                        "N": wordnet.NOUN,
+                        "V": wordnet.VERB,
+                        "R": wordnet.ADV}
+
+            return tag_dict.get(tag, wordnet.NOUN)
+    
+    if execute:
+        lemmatizer = WordNetLemmatizer()
+        
+        if upgrade:
+            nltk.download('averaged_perceptron_tagger')
+            
+        df['pre_processed_text'] = df['pre_processed_text']\
+                                    .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])
+
+        if printed:
+            print('Lematizing, yummy!')
+
+        return df
+    return df
+
+# Remove excess data
+def pp_remove_digits(df, printed=False, execute=False):
+    '''Removes all the digits from the string'''
+    
+    if execute:
+        df['pre_processed_text'] = df['pre_processed_text'].str.replace('[+-]?([0-9]*[.])?[0-9]+', '', regex=True)
+
+        if printed:
+            print('Removing digits')
+
+        return df
+    return df 
+
+def pp_remove_punctuation(df, printed=False, execute=False):
+ 
+    if execute:
+        real_string_punctuation = string.punctuation + "—" + '”' + "’" + "‘" + "…" + '“' + '´' + "`" + "«" + "»"
+        df['pre_processed_text'] = df['pre_processed_text'].apply(lambda x: ''\
+                                            .join(word for word in x if word not in real_string_punctuation))
+
+        if printed:
+            print('Removing pesky dots')
+
+        return df
+    return df
+
+def pp_remove_emojis(df, printed=False, execute=False):
+
+    def deEmojify(text):
+            regrex_pattern = re.compile(pattern = "["
+                u"\U0001F600-\U0001F64F"  # emoticons
+                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                u"\U00002500-\U00002BEF"  # chinese char
+                u"\U00002702-\U000027B0"
+                u"\U00002702-\U000027B0"
+                u"\U000024C2-\U0001F251"
+                u"\U0001f926-\U0001f937"
+                u"\U00010000-\U0010ffff"
+                u"\u2640-\u2642" 
+                u"\u2600-\u2B55"
+                u"\u200d"
+                u"\u23cf"
+                u"\u23e9"
+                u"\u231a"
+                u"\ufe0f"  # dingbats
+                u"\u3030"
+                                "]+", flags = re.UNICODE)
+            return regrex_pattern.sub(r'',text)
+    
+    if execute:
+        df['pre_processed_text'] = df['pre_processed_text'].apply(lambda x: deEmojify(x))
+
+        if printed:
+            print('Disabling emojis')
+
+        return df
+    return df 
+
 if __name__ == "__main__":
-    from big_picture.get_merged_data import get_data
-
-    df1 =  get_data(REL_PATH_INPUT)
-
-    df2 = pre_process(df1,
-                    dataset="all_the_news",
-                    sample=None,
-                    all_true=True, 
-                    lower_case=False, 
-                    no_digits=False,
-                    rem_punct=False,
-                    de_emojify=False,
-                    tokenize=False,
-                    rem_stopwords=False,
-                    stem_not_lematize=False,
-                    lematize=False)
-
-    #for i in range(10):
-    #    print(df2.news_all_data.iloc[i])
-
-    df2.to_csv(r'./data/teste_all_the_news.csv', index = False, header=True)
+    pass

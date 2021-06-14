@@ -64,7 +64,7 @@ class Classifier():
         self.labels = None
 
 
-    def fit(self, train, model='dropout'):
+    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False):
         '''
         Generate a model and fit it to the train_data.
 
@@ -83,7 +83,14 @@ class Classifier():
         # Train classifier with train data
         ohe = OneHotEncoder()
 
-        X = embedding_strings(train['news_all_data'])
+        train = pre_process(
+            train, 
+            source=source, 
+            params=params, 
+            sample=sample, 
+            printed=printed)
+
+        X = embedding_strings(train['pre_processed_text'])
         y = ohe.fit_transform(train[['label']]).toarray()
 
         # Save tags for labels to class
@@ -107,7 +114,6 @@ class Classifier():
                     verbose=1
                     )
 
-
     def save(self):
         '''Saves a classifying model'''
         if self.model != None:
@@ -117,7 +123,7 @@ class Classifier():
             raise Exception('Please fit a model first')
        
 
-    def divide_labels(self, world):
+    def divide_labels(self, world, source='web', params=None, sample=None, printed=False):
         '''
         Populates the classifier with data for clustering.
 
@@ -129,9 +135,15 @@ class Classifier():
         if self.model != None:
 
             # Pre-process data
+            world = pre_process(
+                world, 
+                source=source, 
+                params=params, 
+                sample=sample, 
+                printed=printed)
             
             # Set data to predict
-            X = embedding_strings(world.news_all_data)
+            X = embedding_strings(world['pre_processed_text'])
 
             # Predict data
             results = self.model.predict(X)
@@ -152,18 +164,31 @@ class Classifier():
             self.sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
             for key, value in labels.items():
-                self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
-
+                try:
+                    print(key, value)
+                    self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
+                except:
+                    pass
         else:
             raise Exception('Please fit a model first')
     
 
-    def predict(self, df):
+    def predict(self, df, source='prepared', params=None, sample=None, printed=False):
 
-        pre_processed_X = pre_process(df)
-        embedded_X = embedding_strings(pre_processed_X)
-        prediction = self.model.predict(embedded_X)
+        # Pre-process data
+        df = pre_process(
+            df, 
+            source=source, 
+            params=params, 
+            sample=sample, 
+            printed=printed)
+            
+        # Set data to predict
+        X = embedding_strings(df['pre_processed_text'])
 
+        prediction = self.model.predict(X)
+
+        print(prediction)
         # Put into correct labels
 
         labels = []
@@ -171,7 +196,10 @@ class Classifier():
         for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
+                    print(j)
                     labels.append(self.labels_tag[j])
+        
+        print(labels)
         
         output = []
         # Check if it is embedded X
@@ -266,4 +294,3 @@ def initialize_class_bert_dropout(shape, output):
                   metrics=['accuracy'])
     
     return model
-
