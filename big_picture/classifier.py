@@ -64,7 +64,7 @@ class Classifier():
         self.labels = None
 
 
-    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False):
+    def fit(self, train, source, model='dropout', params=None, sample=None, printed=False):
         '''
         Generate a model and fit it to the train_data.
 
@@ -85,10 +85,10 @@ class Classifier():
 
         train = pre_process(
             train, 
-            source=source, 
-            params=params, 
-            sample=sample, 
-            printed=printed)
+            source, 
+            params, 
+            ample, 
+            printed)
 
         X = embedding_strings(train['pre_processed_text'])
         y = ohe.fit_transform(train[['label']]).toarray()

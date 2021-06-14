@@ -17,7 +17,7 @@ import pandas as pd
 REL_PATH_INPUT = "../raw_data/all_the_news/"
 
 # Main function
-def pre_process(df, source='web', params=None, sample=None, printed=False):
+def pre_process(df, source, params=None, sample=None, printed=False):
     """
     Main function to pre-process data. 
 
@@ -146,6 +146,11 @@ def data_prep(df, source, printed=False):
         
         df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
         df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[CONTENT_COL]
+
+        return df
+    
+    else:
+        print('You need to give the source!!!')
         
         return df
 
