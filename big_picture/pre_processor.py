@@ -70,7 +70,7 @@ def pre_process(df, source='web', params=None, sample=None, printed=False):
                'lemmatize': True,
                'stemming': False}
     
-    print(params)
+    #print(params)
     if params:
         for key, val in params.items():
             pp_dict[key] = val
