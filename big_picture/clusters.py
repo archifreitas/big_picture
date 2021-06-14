@@ -36,7 +36,7 @@ class Cluster():
         tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
         model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
-        texts = list(cluster["news_all_data"])
+        texts = list(cluster["pre_processed_text"])
 
         encoded_input = tokenizer(texts, 
                             return_tensors='tf',
