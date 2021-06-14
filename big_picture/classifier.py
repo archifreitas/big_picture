@@ -137,7 +137,7 @@ class Classifier():
 
             # Pre-process data
             world = pre_process(
-                train, 
+                world, 
                 source=source, 
                 params=params, 
                 sample=sample, 
@@ -165,8 +165,10 @@ class Classifier():
             self.sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
             for key, value in labels.items():
-                self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
-
+                try:
+                    self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
+                except:
+                    pass
         else:
             raise Exception('Please fit a model first')
     
@@ -186,6 +188,7 @@ class Classifier():
 
         prediction = self.model.predict(X)
 
+        print(prediction)
         # Put into correct labels
 
         labels = []
@@ -193,6 +196,7 @@ class Classifier():
         for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
+                    print(j)
                     labels.append(self.labels_tag[j])
         
         output = []
