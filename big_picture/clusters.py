@@ -29,7 +29,7 @@ class Cluster():
 
     def __init__(self, cluster, topic, wordcloud, **kwargs):
         print(cluster.columns)
-        self.df = cluster[['headline', 'link', 'date','author']].reset_index().drop(columns='index')
+        self.df = cluster[['headline', 'link', 'date']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud
 
@@ -57,7 +57,7 @@ class Cluster():
         self.scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
         self.scaler.fit(df[['SA']]) # Fit scaler to data
         df['norm_SA'] = self.scaler.transform(df[['SA']]) # Use scaler to transform data
-        self.df = pd.concat([self.df,df],axis=1)
+        self.df = pd.concat([self.df,df[['SA']]],axis=1)
     
     def show_wordcloud(self, size=8):
         """
