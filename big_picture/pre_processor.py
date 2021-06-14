@@ -71,13 +71,14 @@ def pre_process(df, source, params=None, sample=None, printed=False):
                'lemmatize': True,
                'stemming': False}
     
-    print(params)
+    #print(params)
     if params:
         for key, val in params.items():
             pp_dict[key] = val
     
     # Prep columns for data pre_processing
-    df = data_prep(df, source=source, printed=printed)
+
+    df = data_prep(df, source, printed)
     df['minor_preprocessing'] = df[pre_processed_text]
     df = pp_cat_mapping(df, printed, execute=pp_dict['cat_mapping'])
     df = df.dropna(subset=[pre_processed_text]).reset_index(drop=True)

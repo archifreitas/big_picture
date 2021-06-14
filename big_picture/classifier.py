@@ -20,7 +20,8 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
-from transformers import BertTokenizerFast, TFBertForSequenceClassification
+from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
+from tensorflow.nn import softmax
 
 # Reports libraries
 from sklearn.metrics import classification_report
@@ -114,7 +115,6 @@ class Classifier():
                     verbose=1
                     )
 
-
     def save(self):
         '''Saves a classifying model'''
         if self.model != None:
@@ -137,14 +137,14 @@ class Classifier():
 
             # Pre-process data
             world = pre_process(
-                train, 
+                world, 
                 source=source, 
                 params=params, 
                 sample=sample, 
                 printed=printed)
             
             # Set data to predict
-            X = embedding_strings(world['pre_processed_text'])
+            X = embedding_strings(world['minor_preprocessing'])
 
             # Predict data
             results = self.model.predict(X)
@@ -161,12 +161,18 @@ class Classifier():
             # Transform into Label() instances                
             self.labels = {}
 
-            self.tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-            self.sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.sa_model = TFAutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
             for key, value in labels.items():
-                self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
-
+                print(key, value)
+                if value:
+                    self.labels[self.labels_tag[key]] = Label(
+                                                        world.iloc[value, :].reset_index(),
+                                                        self.labels_tag[key],
+                                                        tokenizer=self.tokenizer,
+                                                        sa_model=self.sa_model
+                                                        )
         else:
             raise Exception('Please fit a model first')
     
@@ -182,10 +188,11 @@ class Classifier():
             printed=printed)
             
         # Set data to predict
-        X = embedding_strings(df['pre_processed_text'])
+        X = embedding_strings(df['minor_preprocessing'])
 
         prediction = self.model.predict(X)
 
+        print(prediction)
         # Put into correct labels
 
         labels = []
@@ -193,12 +200,28 @@ class Classifier():
         for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
+                    print(j)
                     labels.append(self.labels_tag[j])
         
-        output = []
+        print(labels)
+        
+        sa = softmax(self.sa_model(self.tokenizer(
+                    df['minor_preprocessing'].iloc[0], 
+                    return_tensors='tf',
+                    padding=True,
+                    max_length=500, #!!!!!!!!!!!!!!!!might need to change
+                    truncation=True
+                    )).logits).numpy()
+
+        output_df = df[['title', 'url', 'date', 'author', 'source']]
+        output_df[['SA']] = sa[0][1]-sa[0][0]
+
+        output = {}
         # Check if it is embedded X
         for label in labels:
-            output.append((label, self.labels[label].predict(embedded_X)))
+            cluster = self.labels[label].predict(X)
+            output[label] = self.labels[label].clusters[cluster]
+            output[label].df = pd.concat([output_df,output[label].df],axis=0).drop_duplicates('link')
 
         return output
 

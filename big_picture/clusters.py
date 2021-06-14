@@ -4,7 +4,6 @@ Models to cluster seuqences of articles by topic.
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from transformers import BertTokenizerFast, TFBertForSequenceClassification
 from tensorflow.nn import softmax
 from sklearn.preprocessing import MinMaxScaler
 
@@ -28,15 +27,16 @@ class Cluster():
         Type of model used for clustering
     """
 
-    def __init__(self, cluster, topic, wordcloud):
+    def __init__(self, cluster, topic, wordcloud, **kwargs):
+        print(cluster.columns)
         self.df = cluster[['headline', 'link', 'date']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud
 
-        tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        tokenizer = kwargs.get('tokenizer')
+        model = kwargs.get('sa_model')
 
-        texts = list(cluster["news_all_data"])
+        texts = list(cluster["pre_processed_text"])
 
         encoded_input = tokenizer(texts, 
                             return_tensors='tf',
@@ -54,10 +54,10 @@ class Cluster():
 
         
         # Optional Scalling (we may find out that news are not mostly negatively biased)
-        scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
-        scaler.fit(df[['SA']]) # Fit scaler to data
-        df['norm_SA'] = scaler.transform(df[['SA']]) # Use scaler to transform data
-        self.df = pd.concat([self.df,df],axis=1)
+        self.scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
+        self.scaler.fit(df[['SA']]) # Fit scaler to data
+        df['norm_SA'] = self.scaler.transform(df[['SA']]) # Use scaler to transform data
+        self.df = pd.concat([self.df,df[['SA']]],axis=1)
     
     def show_wordcloud(self, size=8):
         """

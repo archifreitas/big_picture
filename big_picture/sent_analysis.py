@@ -1,5 +1,5 @@
 # imports
-from transformers import BertTokenizerFast, TFBertForSequenceClassification
+from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
 from tensorflow.nn import softmax
 import pandas as pd
 import numpy as np
@@ -9,8 +9,8 @@ from sklearn.preprocessing import MinMaxScaler
 news_all_data = "news_all_data" # gotta find a better way to do this...
 
 def distilbert(df, max_length=500):
-    tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-    model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+    model = TFAutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
     import ipdb; ipdb.set_trace()
     texts = list(df[news_all_data])
