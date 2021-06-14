@@ -40,8 +40,6 @@ transformers
 
 # scraping
 datetime
-# dateutil
-# json
 requests
 
 
