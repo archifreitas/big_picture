@@ -166,7 +166,8 @@ class Classifier():
 
             for key, value in labels.items():
                 try:
-                    self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].drop(columns='level_0').reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
+                    print(key, value)
+                    self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
                 except:
                     pass
         else:
@@ -198,6 +199,8 @@ class Classifier():
                 if label_pred >= self.threshold:
                     print(j)
                     labels.append(self.labels_tag[j])
+        
+        print(labels)
         
         output = []
         # Check if it is embedded X
