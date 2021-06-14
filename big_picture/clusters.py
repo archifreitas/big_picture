@@ -53,9 +53,9 @@ class Cluster():
 
         
         # Optional Scalling (we may find out that news are not mostly negatively biased)
-        scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
-        scaler.fit(df[['SA']]) # Fit scaler to data
-        df['norm_SA'] = scaler.transform(df[['SA']]) # Use scaler to transform data
+        self.scaler = MinMaxScaler(feature_range=(-1, 1)) # Instanciate StandarScaler
+        self.scaler.fit(df[['SA']]) # Fit scaler to data
+        df['norm_SA'] = self.scaler.transform(df[['SA']]) # Use scaler to transform data
         self.df = pd.concat([self.df,df],axis=1)
     
     def show_wordcloud(self, size=8):
