@@ -20,7 +20,8 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
-from transformers import BertTokenizerFast, TFBertForSequenceClassification
+from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
+from tensorflow.nn import softmax
 
 # Reports libraries
 from sklearn.metrics import classification_report
@@ -143,7 +144,7 @@ class Classifier():
                 printed=printed)
             
             # Set data to predict
-            X = embedding_strings(world['pre_processed_text'])
+            X = embedding_strings(world['minor_preprocessing'])
 
             # Predict data
             results = self.model.predict(X)
@@ -160,15 +161,18 @@ class Classifier():
             # Transform into Label() instances                
             self.labels = {}
 
-            self.tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-            self.sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.sa_model = TFAutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
             for key, value in labels.items():
-                try:
-                    print(key, value)
-                    self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
-                except:
-                    pass
+                print(key, value)
+                if value:
+                    self.labels[self.labels_tag[key]] = Label(
+                                                        world.iloc[value, :].reset_index(),
+                                                        self.labels_tag[key],
+                                                        tokenizer=self.tokenizer,
+                                                        sa_model=self.sa_model
+                                                        )
         else:
             raise Exception('Please fit a model first')
     
@@ -184,7 +188,7 @@ class Classifier():
             printed=printed)
             
         # Set data to predict
-        X = embedding_strings(df['pre_processed_text'])
+        X = embedding_strings(df['minor_preprocessing'])
 
         prediction = self.model.predict(X)
 
@@ -204,7 +208,7 @@ class Classifier():
         output = []
         # Check if it is embedded X
         for label in labels:
-            output.append((label, self.labels[label].predict(embedded_X)))
+            output.append((label, self.labels[label].predict(X)))
 
         return output
 

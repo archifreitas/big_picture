@@ -99,6 +99,8 @@ class Label():
         Optionally the size of each cluster
         """
 
+        X[column] = X[column].map(lambda r: " ".join(r))
+
         docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
 
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
