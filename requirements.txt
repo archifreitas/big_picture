@@ -39,7 +39,6 @@ nltk
 transformers
 
 # scraping
-random
 datetime
 dateutil
 json
