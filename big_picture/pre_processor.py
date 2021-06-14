@@ -76,7 +76,7 @@ def pre_process(df, source='web', params=None, sample=None, printed=False):
             pp_dict[key] = val
     
     # Prep columns for data pre_processing
-    df = data_prep(df, printed, source=source)
+    df = data_prep(df, source, printed)
     df['minor_preprocessing'] = df[pre_processed_text]
     df = pp_cat_mapping(df, printed, execute=pp_dict['cat_mapping'])
     df = df.dropna(subset=[pre_processed_text]).reset_index(drop=True)
