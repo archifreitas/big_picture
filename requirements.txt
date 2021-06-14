@@ -38,6 +38,10 @@ ipywidgets
 nltk
 transformers
 
+# scraping
+datetime
+requests
+
 
 
 

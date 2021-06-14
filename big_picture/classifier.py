@@ -2,17 +2,16 @@
 Label classifier
 """
 # Internal libraries
-from big_picture.clusters import kmeans
 from big_picture.pre_processor import pre_process
 from big_picture.vectorizers import embedding_strings, tf_idf
-from big_pciture.label import Label
+from big_picture.label import Label
 
 # General libraries
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import requests
+import pickle
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -21,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import models
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
+from transformers import BertTokenizerFast, TFBertForSequenceClassification
 
 # Reports libraries
 from sklearn.metrics import classification_report
@@ -64,7 +64,7 @@ class Classifier():
         self.labels = None
 
 
-    def fit(train, model=initialize_class_bert_dropout()):
+    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False):
         '''
         Generate a model and fit it to the train_data.
 
@@ -80,16 +80,18 @@ class Classifier():
             Classification model to be used.
         '''
 
-        # Pre-process data
-        pre_processed_train = pre_process(train,
-                                          sample=1,
-                                          all_true=True)                        
-        
         # Train classifier with train data
         ohe = OneHotEncoder()
 
-        X = embedding_strings(pre_processed_train.drop(columns='label'))
-        y = ohe.fit_transform(pre_processed_train[['label']].toarray())
+        train = pre_process(
+            train, 
+            source=source, 
+            params=params, 
+            sample=sample, 
+            printed=printed)
+
+        X = embedding_strings(train['pre_processed_text'])
+        y = ohe.fit_transform(train[['label']]).toarray()
 
         # Save tags for labels to class
         self.labels_tag = ohe.categories_[0]
@@ -97,26 +99,32 @@ class Classifier():
         # Save model variable to class
         es = EarlyStopping(patience=10)
 
-        self.model = model.fit(X,
-                               y,
-                               epochs=20,
-                               validation_split=0.25,
-                               batch_size=32,
-                               callbacks=[es],
-                               verbose=1
-                               )
+        print(X.shape)
+        print(y.shape)
+        if model == 'dropout':
+            self.model = initialize_class_bert_dropout(X.shape[1], y.shape[1])
+
+        self.model.fit(
+                    X,
+                    y,
+                    epochs=20,
+                    validation_split=0.25,
+                    batch_size=32,
+                    callbacks=[es],
+                    verbose=1
+                    )
 
 
-    def save():
+    def save(self):
         '''Saves a classifying model'''
         if self.model != None:
             filename = 'finalized_model.sav'
-            pickle.dump(model, open(filename, 'wb'))
+            pickle.dump(self.model, open(filename, 'wb'))
         else:
             raise Exception('Please fit a model first')
        
 
-    def divide_labels(world):
+    def divide_labels(self, world, source='web', params=None, sample=None, printed=False):
         '''
         Populates the classifier with data for clustering.
 
@@ -128,12 +136,15 @@ class Classifier():
         if self.model != None:
 
             # Pre-process data
-            pre_processed_world = pre_process(world,
-                                            sample=1,
-                                            all_true=True)   
+            world = pre_process(
+                world, 
+                source=source, 
+                params=params, 
+                sample=sample, 
+                printed=printed)
             
             # Set data to predict
-            X = embedding_strings(pre_processed_world)
+            X = embedding_strings(world['pre_processed_text'])
 
             # Predict data
             results = self.model.predict(X)
@@ -150,27 +161,46 @@ class Classifier():
             # Transform into Label() instances                
             self.labels = {}
 
-            for key, value in labels.items():
-                self.labels[key] = Label(pre_processed_world.iloc[value, :], self.labels_tag[key])
+            self.tokenizer = BertTokenizerFast.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            self.sa_model = TFBertForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
+            for key, value in labels.items():
+                try:
+                    print(key, value)
+                    self.labels[self.labels_tag[key]] = Label(world.iloc[value, :].reset_index(), self.labels_tag[key], tokenizer=self.tokenizer, sa_model=self.sa_model)
+                except:
+                    pass
         else:
             raise Exception('Please fit a model first')
     
 
-    def predict(self, df):
+    def predict(self, df, source='prepared', params=None, sample=None, printed=False):
 
-        pre_processed_X = pre_process(df)
-        embedded_X = embedding_string(pre_processed_X)
-        prediction = self.model.predict(embedded_X)
+        # Pre-process data
+        df = pre_process(
+            df, 
+            source=source, 
+            params=params, 
+            sample=sample, 
+            printed=printed)
+            
+        # Set data to predict
+        X = embedding_strings(df['pre_processed_text'])
 
+        prediction = self.model.predict(X)
+
+        print(prediction)
         # Put into correct labels
 
         labels = []
 
-        for i, result in enumerate(results):
+        for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
+                    print(j)
                     labels.append(self.labels_tag[j])
+        
+        print(labels)
         
         output = []
         # Check if it is embedded X
@@ -246,11 +276,11 @@ def initialize_class_bert_0():
     return model
 
 
-def initialize_class_bert_dropout():
+def initialize_class_bert_dropout(shape, output):
     
     model = models.Sequential()
     
-    model.add(layers.Dense(300, activation='relu', input_dim=embeddings_200k.shape[1]))
+    model.add(layers.Dense(300, activation='relu', input_dim=shape))
     model.add(layers.Dropout(0.2))
     
     model.add(layers.Dense(150, activation='relu'))
@@ -258,11 +288,10 @@ def initialize_class_bert_dropout():
     
     model.add(layers.Dense(50, activation='relu'))
     
-    model.add(layers.Dense(16, activation='softmax'))
+    model.add(layers.Dense(output, activation='softmax'))
     
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
     
     return model
-
