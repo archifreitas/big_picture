@@ -40,7 +40,7 @@ transformers
 
 # scraping
 datetime
-dateutil
+# dateutil
 json
 requests
 
