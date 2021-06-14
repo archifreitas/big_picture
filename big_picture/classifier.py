@@ -205,10 +205,23 @@ class Classifier():
         
         print(labels)
         
-        output = []
+        sa = softmax(self.sa_model(self.tokenizer(
+                    df['minor_preprocessing'].iloc[0], 
+                    return_tensors='tf',
+                    padding=True,
+                    max_length=500, #!!!!!!!!!!!!!!!!might need to change
+                    truncation=True
+                    )).logits).numpy()
+
+        output_df = df[['title', 'url', 'date', 'author', 'source']]
+        output_df[['SA']] = sa[0][1]-sa[0][0]
+
+        output = {}
         # Check if it is embedded X
         for label in labels:
-            output.append((label, self.labels[label].predict(X)))
+            cluster = self.labels[label].predict(X)
+            output[label] = self.labels[label].clusters[cluster]
+            output[label].df = pd.concat([output_df,output[label].df],axis=0).drop_duplicates('link')
 
         return output
 
