@@ -65,6 +65,7 @@ def pre_process(df, source='web', params=None, sample=None, printed=False):
                'remove_digits': True,
                'remove_punctuation': True,
                'remove_emojis': True,
+               'lower_case': True,
                'tokenize': True,
                'stopwords': True,
                'lemmatize': True,
@@ -74,9 +75,11 @@ def pre_process(df, source='web', params=None, sample=None, printed=False):
     if params:
         for key, val in params.items():
             pp_dict[key] = val
+    # pp_dict.update(params)
     
     # Prep columns for data pre_processing
     df = data_prep(df, source, printed)
+    df = pp_lower_case(df, printed, execute=pp_dict['lower_case'])
     df['minor_preprocessing'] = df[pre_processed_text]
     df = pp_cat_mapping(df, printed, execute=pp_dict['cat_mapping'])
     df = df.dropna(subset=[pre_processed_text]).reset_index(drop=True)
@@ -112,6 +115,8 @@ def pre_process(df, source='web', params=None, sample=None, printed=False):
     df = pp_stopwords(df, printed, execute=pp_dict['stopwords'])
     df = pp_lemmatizing(df, printed, execute=pp_dict['lemmatize'])
     df = pp_stemming(df, printed, execute=pp_dict['stemming'])
+
+    df[pre_processed_text] = df[pre_processed_text].map(lambda x: " ".join(x))
     
     if printed:
         print("-------------------------")
@@ -131,8 +136,8 @@ def data_prep(df, source, printed=False):
         DESCRIPTION_COL = "short_description"
         HEADLINE_COL = "headline"
         
-        
-        df = df.drop(columns=['Unnamed: 0', 'index'])
+       
+        df = df.drop(columns=['Unnamed: 0', 'index'], errors='ignore')
         df = df[df['content'] != "Invalid file"].reset_index(drop=True)
         df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
         df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[DESCRIPTION_COL] + " " + df[CONTENT_COL]
@@ -148,6 +153,15 @@ def data_prep(df, source, printed=False):
         df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[CONTENT_COL]
         
         return df
+    
+    elif source == 'train':
+        DESCRIPTION_COL = "short_description"
+        HEADLINE_COL = "headline"
+
+        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[DESCRIPTION_COL]
+ 
+        return df
+
 
 def pp_cat_mapping(df, printed=False, execute=False):
 
@@ -253,6 +267,18 @@ def pp_vocab_richness(df, printed=False, execute=False):
     return df
 
 # Pre_process data
+def pp_lower_case(df, printed=False, execute=False):
+    '''Lower cases the pre_processed_text column'''
+    
+    if execute:
+        df['pre_processed_text'] = df['pre_processed_text'].str.lower()
+
+        if printed:
+            print('Lowering the cases')
+
+        return df
+    return df
+
 def pp_tokenize(df, printed=False, execute=False):
     
     if execute:
