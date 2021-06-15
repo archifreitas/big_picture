@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 #import hdbscan as hdb
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, Birch
 from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
@@ -52,6 +52,12 @@ class Label():
                                   'pre_processed_text', 
                                   vectors, 
                                   clusters=1+len(df)//30,
+                                  **kwargs
+                                  )
+        elif model_name == 'birch':
+            self.clusters= self.birch(df, 
+                                  'pre_processed_text', 
+                                  vectors, 
                                   **kwargs
                                   )
         else:
@@ -150,11 +156,8 @@ class Label():
         vectors : string
             vectorized data of the preproccessed column
 
-        clusters : int
+        clusters : int (default: 8)
             intended number of clusters
-
-        return_cluster_sizes : bolean
-            Optionally return the size of each cluster
         """
 
         self.model = KMeans(n_clusters=clusters).fit(vectors)
@@ -163,3 +166,29 @@ class Label():
 
         return self.output_format(X, column,**kwargs)
 
+    def birch(self, X, column, vectors, threshold=0.5, **kwargs):
+        """
+        Birch model that outputs a list of cluster objects with the dataframe and topic
+
+        Parameters
+        ----------
+        X : df
+            Data Frame of articles
+
+        column : string
+            the preproccessed column name
+
+        vectors : string
+            vectorized data of the preproccessed column
+
+        threshold : int (default: 0.5)
+            The radius of the subcluster obtained by merging a new sample and the closest 
+            subcluster should be lesser than the threshold. Otherwise a new subcluster is started. 
+            Setting this value to be very low promotes splitting and vice-versa.
+        """
+
+        self.model = Birch(threshold=threshold).fit(vectors)
+
+        X['topic'] = self.model.labels_
+
+        return self.output_format(X, column,**kwargs)

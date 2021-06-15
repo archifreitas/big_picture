@@ -307,7 +307,7 @@ def pp_lemmatizing(df, printed=False, execute=False, upgrade=False):
         lemmatizer = WordNetLemmatizer()
         
         if upgrade:
-            nltk.download('averaged_perceptron_tagger')
+            nltk.download('popular')
             
         df['pre_processed_text'] = df['pre_processed_text']\
                                     .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])
