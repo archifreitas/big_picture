@@ -109,14 +109,11 @@ class Label():
 
         docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
 
+        print(len(X))
+
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
 
         top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=10)
-
-        clusters = []
-
-        for topic in X['topic'].unique():
-            clusters.append((X[X.topic == topic]))
 
         self.sizes = (X.groupby(['topic'])
                         .content
@@ -125,6 +122,12 @@ class Label():
                         .rename({"topic": "topic", "content": "Size"}, axis='columns')
                         .sort_values("Size", ascending=False))
         
+
+        clusters = []
+
+        for topic in X['topic'].unique():
+            clusters.append((X[X.topic == topic]))
+
         output = []
         for i, cluster in enumerate(clusters):
             wordcloud = WordCloud(width = 800, height = 800,
