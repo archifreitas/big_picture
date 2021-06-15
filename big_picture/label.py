@@ -1,11 +1,7 @@
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 #import hdbscan as hdb
-<<<<<<< HEAD
 from sklearn.cluster import KMeans, Birch
-=======
-from sklearn.cluster import KMeans
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
 from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
@@ -39,11 +35,7 @@ class Label():
         Name of model to be used for clustering
     
     """
-<<<<<<< HEAD
     def __init__(self, df, label, vec_name='embedding_strings', model_name='kmeans', **kwargs):
-=======
-    def __init__(self, df, label, *args, vec_name='embedding_strings', model_name='kmeans'):
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         self.label = label
 
         if vec_name == 'tf_idf':
@@ -52,18 +44,13 @@ class Label():
             vectors, self.vectorizer = embedding_strings(df.pre_processed_text,  return_model=True)
         else:
             pass
-<<<<<<< HEAD
  
-=======
-
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         self.model = None
         self.sizes = None
         if model_name == 'kmeans':
             self.clusters= self.kmeans(df, 
                                   'pre_processed_text', 
                                   vectors, 
-<<<<<<< HEAD
                                   clusters=1+len(df)//30,
                                   **kwargs
                                   )
@@ -73,9 +60,6 @@ class Label():
                                   vectors, 
                                   **kwargs
                                   )
-=======
-                                  clusters=8)
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         else:
             print("No model was found, this may cause problems in the future")
 
@@ -115,11 +99,7 @@ class Label():
 
         return tf_idf, count
 
-<<<<<<< HEAD
     def output_format(self, X, column, **kwargs):
-=======
-    def output_format(self, X, column):
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         """
         Returns a list of cluster objects with the dataframe and topic
         Optionally the size of each cluster
@@ -127,25 +107,14 @@ class Label():
 
         docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
 
-<<<<<<< HEAD
         # print(X.pre_processed_text.iloc[0])
 
         # print(X.groupby(['topic'], as_index = False).count())
 
-=======
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
 
         top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=10)
 
-<<<<<<< HEAD
-=======
-        clusters = []
-
-        for topic in X['topic'].unique():
-            clusters.append((X[X.topic == topic]))
-
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         self.sizes = (X.groupby(['topic'])
                         .content
                         .count()
@@ -153,15 +122,12 @@ class Label():
                         .rename({"topic": "topic", "content": "Size"}, axis='columns')
                         .sort_values("Size", ascending=False))
         
-<<<<<<< HEAD
 
         clusters = []
 
         for topic in X['topic'].unique():
             clusters.append((X[X.topic == topic]))
 
-=======
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         output = []
         for i, cluster in enumerate(clusters):
             wordcloud = WordCloud(width = 800, height = 800,
@@ -171,22 +137,14 @@ class Label():
                 Cluster(
                     cluster,
                     top_n_words[i],
-<<<<<<< HEAD
                     wordcloud,
                     **kwargs
-=======
-                    wordcloud
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
                 )
             )
 
         return output
 
-<<<<<<< HEAD
     def kmeans(self, X, column, vectors, clusters=8, **kwargs):
-=======
-    def kmeans(self, X, column, vectors, clusters=8):
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         """
         Kmean model that outputs a list of cluster objects with the dataframe and topic
 
@@ -201,23 +159,14 @@ class Label():
         vectors : string
             vectorized data of the preproccessed column
 
-<<<<<<< HEAD
         clusters : int (default: 8)
             intended number of clusters
-=======
-        clusters : int
-            intended number of clusters
-
-        return_cluster_sizes : bolean
-            Optionally return the size of each cluster
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
         """
 
         self.model = KMeans(n_clusters=clusters).fit(vectors)
 
         X['topic'] = self.model.labels_
 
-<<<<<<< HEAD
         return self.output_format(X, column,**kwargs)
 
     def birch(self, X, column, vectors, threshold=0.5, **kwargs):
@@ -246,7 +195,3 @@ class Label():
         X['topic'] = self.model.labels_
 
         return self.output_format(X, column,**kwargs)
-=======
-        return self.output_format(X, column)
-
->>>>>>> 7a5e93a154a84cf55cac46d21df6d44e4a1d472f
