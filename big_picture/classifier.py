@@ -179,7 +179,7 @@ class Classifier():
         self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
         self.sa_model = TFAutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
 
-    def divide_labels(self, world, source='web', params=None, sample=None, printed=False):
+    def divide_labels(self, world, source='web', params=None, sample=None, printed=False, model_name='kmeans'):
         '''
         Populates the classifier with data for clustering.
 
@@ -229,6 +229,7 @@ class Classifier():
                                                         self.labels_tag[key],
                                                         tokenizer=self.tokenizer,
                                                         sa_model=self.sa_model
+                                                        model_name=model_name
                                                         )
         else:
             raise Exception('Please fit a model first')
