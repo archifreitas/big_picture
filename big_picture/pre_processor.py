@@ -150,7 +150,7 @@ def data_prep(df, source, printed=False):
         CONTENT_COL = "content"
         
         df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
-        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[CONTENT_COL]
+        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df['description'] + " " + df[CONTENT_COL]
         
         return df
     
