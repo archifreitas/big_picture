@@ -13,10 +13,7 @@ hdbscan
 tensorflow
 sentence_transformers
 umap
-<<<<<<< HEAD
-=======
 gcsfs
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
 
 # tests/linter
 black
