@@ -228,7 +228,7 @@ class Classifier():
                                                         world.iloc[value, :].reset_index(),
                                                         self.labels_tag[key],
                                                         tokenizer=self.tokenizer,
-                                                        sa_model=self.sa_model
+                                                        sa_model=self.sa_model,
                                                         model_name=model_name
                                                         )
         else:
