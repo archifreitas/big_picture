@@ -57,7 +57,8 @@ class Label():
         elif model_name == 'birch':
             self.clusters= self.birch(df, 
                                   'pre_processed_text', 
-                                  vectors, 
+                                  vectors, , 
+                                  clusters=1+len(df)//30,
                                   **kwargs
                                   )
         else:
@@ -169,7 +170,7 @@ class Label():
 
         return self.output_format(X, column,**kwargs)
 
-    def birch(self, X, column, vectors, threshold=0.5, **kwargs):
+    def birch(self, X, column, vectors, clusters, threshold=0.5, **kwargs):
         """
         Birch model that outputs a list of cluster objects with the dataframe and topic
 
@@ -190,7 +191,7 @@ class Label():
             Setting this value to be very low promotes splitting and vice-versa.
         """
 
-        self.model = Birch(threshold=threshold).fit(vectors)
+        self.model = Birch(threshold=threshold, n_clusters=clusters).fit(vectors)
 
         X['topic'] = self.model.labels_
 
