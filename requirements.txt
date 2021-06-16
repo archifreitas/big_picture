@@ -12,6 +12,7 @@ hdbscan
 tensorflow
 sentence_transformers
 umap
+gcsfs
 
 # tests/linter
 black

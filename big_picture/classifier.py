@@ -157,10 +157,6 @@ class Classifier():
                     return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
                 else: return super().find_class(module, name)
 
-        mdl_path = os.path.join(path, 'model.pkl')
-        state_path = os.path.join(path, 'state.pkl')
-
-
         fs = gcsfs.GCSFileSystem(project = 'wagon-bootcamp-311206')
         fs.ls('big_picture_model')
         with fs.open('big_picture_model/model/state.pkl', 'rb') as file:
@@ -175,7 +171,7 @@ class Classifier():
         self._init()
 
         self.model = initialize_class_bert_dropout(self.input_shape, self.output_shape)
-        self.model.load_weights(mdl_path)
+        self.model.load_weights(path+'/model.pkl')
 
         #self._init()
         
