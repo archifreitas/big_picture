@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import os
+import io
+import gcsfs
+import torch
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -148,11 +151,20 @@ class Classifier():
             pickle.dump(state, fp)
 
     def load(self, path):
+        class CPU_Unpickler(pickle.Unpickler):
+            def find_class(self, module, name):
+                if module == 'torch.storage' and name == '_load_from_bytes':
+                    return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+                else: return super().find_class(module, name)
+
         mdl_path = os.path.join(path, 'model.pkl')
         state_path = os.path.join(path, 'state.pkl')
 
-        with open(state_path, 'rb') as fp:
-            state = pickle.load(fp)
+
+        fs = gcsfs.GCSFileSystem(project = 'wagon-bootcamp-311206')
+        fs.ls('big_picture_model')
+        with fs.open('big_picture_model/model/state.pkl', 'rb') as file:
+            state = CPU_Unpickler(file).load()
 
         self.labels = state['labels'] 
         self.labels_tag = state['labels_tag'] 
