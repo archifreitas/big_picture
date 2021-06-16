@@ -57,7 +57,7 @@ class Label():
         elif model_name == 'birch':
             self.clusters= self.birch(df, 
                                   'pre_processed_text', 
-                                  vectors, , 
+                                  vectors,
                                   clusters=1+len(df)//30,
                                   **kwargs
                                   )
