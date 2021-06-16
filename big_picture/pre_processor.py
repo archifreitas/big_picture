@@ -17,7 +17,11 @@ import pandas as pd
 REL_PATH_INPUT = "../raw_data/all_the_news/"
 
 # Main function
+<<<<<<< HEAD
 def pre_process(df, source, params=None, sample=None, printed=False):
+=======
+def pre_process(df, source='web', params=None, sample=None, printed=False):
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
     """
     Main function to pre-process data. 
 
@@ -58,14 +62,22 @@ def pre_process(df, source, params=None, sample=None, printed=False):
     if sample:
         df = df.sample(sample)
     
+<<<<<<< HEAD
     pp_dict = {'data_prep': True,
                'cat_mapping': True,
+=======
+    pp_dict = {'cat_mapping': True,
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
                'count_numbers': True,
                'check_emotions': True,
                'vocab_richness': True,
                'remove_digits': True,
                'remove_punctuation': True,
                'remove_emojis': True,
+<<<<<<< HEAD
+=======
+               'lower_case': True,
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
                'tokenize': True,
                'stopwords': True,
                'lemmatize': True,
@@ -75,10 +87,18 @@ def pre_process(df, source, params=None, sample=None, printed=False):
     if params:
         for key, val in params.items():
             pp_dict[key] = val
+<<<<<<< HEAD
     
     # Prep columns for data pre_processing
 
     df = data_prep(df, source, printed)
+=======
+    # pp_dict.update(params)
+    
+    # Prep columns for data pre_processing
+    df = data_prep(df, source, printed)
+    df = pp_lower_case(df, printed, execute=pp_dict['lower_case'])
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
     df['minor_preprocessing'] = df[pre_processed_text]
     df = pp_cat_mapping(df, printed, execute=pp_dict['cat_mapping'])
     df = df.dropna(subset=[pre_processed_text]).reset_index(drop=True)
@@ -114,6 +134,11 @@ def pre_process(df, source, params=None, sample=None, printed=False):
     df = pp_stopwords(df, printed, execute=pp_dict['stopwords'])
     df = pp_lemmatizing(df, printed, execute=pp_dict['lemmatize'])
     df = pp_stemming(df, printed, execute=pp_dict['stemming'])
+<<<<<<< HEAD
+=======
+
+    df[pre_processed_text] = df[pre_processed_text].map(lambda x: " ".join(x))
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
     
     if printed:
         print("-------------------------")
@@ -133,8 +158,13 @@ def data_prep(df, source, printed=False):
         DESCRIPTION_COL = "short_description"
         HEADLINE_COL = "headline"
         
+<<<<<<< HEAD
         
         df = df.drop(columns=['Unnamed: 0', 'index'])
+=======
+       
+        df = df.drop(columns=['Unnamed: 0', 'index'], errors='ignore')
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         df = df[df['content'] != "Invalid file"].reset_index(drop=True)
         df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
         df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[DESCRIPTION_COL] + " " + df[CONTENT_COL]
@@ -147,6 +177,7 @@ def data_prep(df, source, printed=False):
         CONTENT_COL = "content"
         
         df[CONTENT_COL] = df[CONTENT_COL].replace(['\n','\r'],' ', regex=True)
+<<<<<<< HEAD
         df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[CONTENT_COL]
 
         return df
@@ -156,6 +187,21 @@ def data_prep(df, source, printed=False):
         
         return df
 
+=======
+        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df['description'] + " " + df[CONTENT_COL]
+        
+        return df
+    
+    elif source == 'train':
+        DESCRIPTION_COL = "short_description"
+        HEADLINE_COL = "headline"
+
+        df['pre_processed_text'] = df[HEADLINE_COL] + " " + df[DESCRIPTION_COL]
+ 
+        return df
+
+
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
 def pp_cat_mapping(df, printed=False, execute=False):
 
     my_dict = {'CRIME': 'Crime',
@@ -260,6 +306,21 @@ def pp_vocab_richness(df, printed=False, execute=False):
     return df
 
 # Pre_process data
+<<<<<<< HEAD
+=======
+def pp_lower_case(df, printed=False, execute=False):
+    '''Lower cases the pre_processed_text column'''
+    
+    if execute:
+        df['pre_processed_text'] = df['pre_processed_text'].str.lower()
+
+        if printed:
+            print('Lowering the cases')
+
+        return df
+    return df
+
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
 def pp_tokenize(df, printed=False, execute=False):
     
     if execute:
@@ -314,7 +375,11 @@ def pp_lemmatizing(df, printed=False, execute=False, upgrade=False):
         lemmatizer = WordNetLemmatizer()
         
         if upgrade:
+<<<<<<< HEAD
             nltk.download('averaged_perceptron_tagger')
+=======
+            nltk.download('popular')
+>>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
             
         df['pre_processed_text'] = df['pre_processed_text']\
                                     .map(lambda x: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in x])

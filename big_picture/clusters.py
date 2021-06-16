@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tensorflow.nn import softmax
 from sklearn.preprocessing import MinMaxScaler
+from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
 
 class Cluster():
     """
@@ -29,12 +30,17 @@ class Cluster():
 
     def __init__(self, cluster, topic, wordcloud, **kwargs):
         print(cluster.columns)
-        self.df = cluster[['headline', 'link', 'date']].reset_index().drop(columns='index')
+        self.df = cluster[['title', 'url', 'publishedAt', 'author', 'source']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud
 
-        tokenizer = kwargs.get('tokenizer')
-        model = kwargs.get('sa_model')
+        if 'tokenizer' in kwargs:
+            tokenizer = kwargs.get('tokenizer')
+            model = kwargs.get('sa_model')
+        else:
+            tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+            model = TFAutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+
 
         texts = list(cluster["pre_processed_text"])
 
