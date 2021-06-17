@@ -29,7 +29,7 @@ class Cluster():
     """
 
     def __init__(self, cluster, topic, wordcloud, **kwargs):
-        print(cluster.columns)
+        #print(cluster.columns)
         self.df = cluster[['title', 'url', 'publishedAt', 'author', 'source']].reset_index().drop(columns='index')
         self.topic = topic
         self.wordcloud = wordcloud

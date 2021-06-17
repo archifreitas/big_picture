@@ -114,7 +114,7 @@ class Label():
 
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
 
-        top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=10)
+        top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=20)
 
         self.sizes = (X.groupby(['topic'])
                         .content
