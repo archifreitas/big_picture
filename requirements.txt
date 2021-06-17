@@ -13,7 +13,6 @@ hdbscan
 tensorflow
 sentence_transformers
 umap
-gcsfs
 
 # tests/linter
 black
@@ -24,7 +23,6 @@ yapf
 
 # API
 gcsfs
-google-cloud-storage
 mlflow
 s3fs
 
