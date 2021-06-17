@@ -13,3 +13,5 @@ raw_data/
 big_picture/data
 *.csv
 *.json
+/notebooks
+/models
