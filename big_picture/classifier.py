@@ -14,8 +14,8 @@ import seaborn as sns
 import pickle
 import os
 import io
-import gcsfs
-import torch
+# import gcsfs
+# import torch
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -61,7 +61,10 @@ class Classifier():
         Class containing the subsets of the original dataset by label.
 
     threshold: float
-        Value between 0 and 1 for the classifier to consider that a prediction belongs to a certain topic.
+        Value between 0 and 1 for the classifier to consider that a prediction belon
+        
+        
+        to a certain topic.
     """
 
     def __init__(self, threshold=0.4):
