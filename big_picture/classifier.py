@@ -94,6 +94,15 @@ class Classifier():
 
         if pre_made:
             X = train
+
+            train_y = pre_process(
+                train, 
+                source=source, 
+                params=params, 
+                sample=sample, 
+                printed=printed)
+
+            y = ohe.fit_transform(train_y[['label']]).toarray()
         else:
             params = {
                 'lemmatize': False,
