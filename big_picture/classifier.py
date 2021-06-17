@@ -154,17 +154,11 @@ class Classifier():
         mdl_path = os.path.join(path, 'model.pkl')
         state_path = os.path.join(path, 'state.pkl')
 
-         class CPU_Unpickler(pickle.Unpickler):
-             def find_class(self, module, name):
-                 if module == 'torch.storage' and name == '_load_from_bytes':
-                     return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
-                 else: return super().find_class(module, name)
-
         # fs = gcsfs.GCSFileSystem(project = 'wagon-bootcamp-311206')
         # fs.ls('big_picture_model')
 
         with open(state_path, 'rb') as fp:
-             state = CPU_Unpickler(fp).load() #pickle.load(fp)
+             pickle.load(fp)
         # with open('big_picture_model/model/state.pkl', 'rb') as file:
         #     state = CPU_Unpickler(file).load()
 
