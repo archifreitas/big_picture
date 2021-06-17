@@ -72,7 +72,7 @@ class Classifier():
         self.input_shape = None
         self.output_shape = None
 
-    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False):
+    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False, pre_made=False):
         '''
         Generate a model and fit it to the train_data.
 
@@ -228,7 +228,7 @@ class Classifier():
             self._init()
 
             for key, value in labels.items():
-                print(key, value)
+                #print(key, value)
                 if value:
                     self.labels[self.labels_tag[key]] = Label(
                                                         world.iloc[value, :].reset_index(),
@@ -256,7 +256,7 @@ class Classifier():
 
         prediction = self.model.predict(X)
 
-        print(prediction)
+        #print(prediction)
         # Put into correct labels
 
         labels = []
@@ -264,10 +264,13 @@ class Classifier():
         for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
-                    print(j)
+                    #print(j)
                     labels.append(self.labels_tag[j])
         
-        print(labels)
+        #print(labels)
+        if not labels:
+            labels = ['Other']
+            
         self._init()
 
         sa = softmax(self.sa_model(self.tokenizer(
@@ -362,12 +365,18 @@ def initialize_class_bert_dropout(shape, output):
     model = models.Sequential()
     
     model.add(layers.Dense(700, activation='relu', input_dim=shape))
-    model.add(layers.Dropout(0.2))
+    #model.add(layers.Dropout(0.5))
     
-    model.add(layers.Dense(150, activation='relu'))
-    model.add(layers.Dropout(0.2))
+    model.add(layers.Dense(512, activation='relu'))
+    #model.add(layers.Dropout(0.2))
     
-    model.add(layers.Dense(50, activation='relu'))
+    model.add(layers.Dense(256, activation='relu'))
+    
+    model.add(layers.Dense(128, activation='relu'))   
+    
+    model.add(layers.Dense(64, activation='relu'))
+    
+    model.add(layers.Dense(32, activation='relu'))
     
     model.add(layers.Dense(output, activation='softmax'))
     

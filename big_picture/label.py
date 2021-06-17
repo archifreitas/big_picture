@@ -1,11 +1,7 @@
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 #import hdbscan as hdb
-<<<<<<< HEAD
-from sklearn.cluster import KMeans
-=======
 from sklearn.cluster import KMeans, Birch
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
 from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
@@ -48,11 +44,7 @@ class Label():
             vectors, self.vectorizer = embedding_strings(df.pre_processed_text,  return_model=True)
         else:
             pass
-<<<<<<< HEAD
-
-=======
  
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         self.model = None
         self.sizes = None
         if model_name == 'kmeans':
@@ -62,8 +54,6 @@ class Label():
                                   clusters=1+len(df)//30,
                                   **kwargs
                                   )
-<<<<<<< HEAD
-=======
         elif model_name == 'birch':
             self.clusters= self.birch(df, 
                                   'pre_processed_text', 
@@ -71,7 +61,6 @@ class Label():
                                   clusters=1+len(df)//30,
                                   **kwargs
                                   )
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         else:
             print("No model was found, this may cause problems in the future")
 
@@ -117,20 +106,6 @@ class Label():
         Optionally the size of each cluster
         """
 
-<<<<<<< HEAD
-        X[column] = X[column].map(lambda r: " ".join(r))
-
-        docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
-
-        tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
-
-        top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=10)
-
-        clusters = []
-
-        for topic in X['topic'].unique():
-            clusters.append((X[X.topic == topic]))
-=======
         docs_per_topic = X.groupby(['topic'], as_index = False).agg({column: ' '.join})
 
         # print(X.pre_processed_text.iloc[0])
@@ -139,8 +114,7 @@ class Label():
 
         tf_idf, count = self.c_tf_idf(docs_per_topic[column].values, m=len(X))
 
-        top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=10)
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
+        top_n_words = self.extract_top_n_words_per_topic(tf_idf, count, docs_per_topic, n=20)
 
         self.sizes = (X.groupby(['topic'])
                         .content
@@ -149,15 +123,12 @@ class Label():
                         .rename({"topic": "topic", "content": "Size"}, axis='columns')
                         .sort_values("Size", ascending=False))
         
-<<<<<<< HEAD
-=======
 
         clusters = []
 
         for topic in X['topic'].unique():
             clusters.append((X[X.topic == topic]))
 
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         output = []
         for i, cluster in enumerate(clusters):
             wordcloud = WordCloud(width = 800, height = 800,
@@ -189,16 +160,8 @@ class Label():
         vectors : string
             vectorized data of the preproccessed column
 
-<<<<<<< HEAD
-        clusters : int
-            intended number of clusters
-
-        return_cluster_sizes : bolean
-            Optionally return the size of each cluster
-=======
         clusters : int (default: 8)
             intended number of clusters
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         """
 
         self.model = KMeans(n_clusters=clusters).fit(vectors)
@@ -207,13 +170,8 @@ class Label():
 
         return self.output_format(X, column,**kwargs)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    def birch(self, X, column, vectors, threshold=0.5, **kwargs):
-=======
+
     def birch(self, X, column, vectors, clusters, threshold=0.5, **kwargs):
->>>>>>> a0386e179c711e3a2995fc82c44185c1d4467688
         """
         Birch model that outputs a list of cluster objects with the dataframe and topic
 
@@ -239,4 +197,3 @@ class Label():
         X['topic'] = self.model.labels_
 
         return self.output_format(X, column,**kwargs)
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
