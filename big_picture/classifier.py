@@ -232,7 +232,7 @@ class Classifier():
             self._init()
 
             for key, value in labels.items():
-                print(key, value)
+                #print(key, value)
                 if value:
                     self.labels[self.labels_tag[key]] = Label(
                                                         world.iloc[value, :].reset_index(),
@@ -260,7 +260,7 @@ class Classifier():
 
         prediction = self.model.predict(X)
 
-        print(prediction)
+        #print(prediction)
         # Put into correct labels
 
         labels = []
@@ -268,10 +268,10 @@ class Classifier():
         for i, result in enumerate(prediction):
             for j, label_pred in enumerate(result):
                 if label_pred >= self.threshold:
-                    print(j)
+                    #print(j)
                     labels.append(self.labels_tag[j])
         
-        print(labels)
+        #print(labels)
         self._init()
 
         sa = softmax(self.sa_model(self.tokenizer(
