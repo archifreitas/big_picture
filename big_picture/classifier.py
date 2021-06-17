@@ -14,8 +14,8 @@ import seaborn as sns
 import pickle
 import os
 import io
-# import gcsfs
-# import torch
+import gcsfs
+import torch
 
 # Encoding libraries
 from sklearn.preprocessing import OneHotEncoder
@@ -61,10 +61,7 @@ class Classifier():
         Class containing the subsets of the original dataset by label.
 
     threshold: float
-        Value between 0 and 1 for the classifier to consider that a prediction belon
-        
-        
-        to a certain topic.
+        Value between 0 and 1 for the classifier to consider that a prediction belongs to a certain topic.
     """
 
     def __init__(self, threshold=0.4):
@@ -157,11 +154,17 @@ class Classifier():
         mdl_path = os.path.join(path, 'model.pkl')
         state_path = os.path.join(path, 'state.pkl')
 
+        # class CPU_Unpickler(pickle.Unpickler):
+        #     def find_class(self, module, name):
+        #         if module == 'torch.storage' and name == '_load_from_bytes':
+        #             return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        #         else: return super().find_class(module, name)
+
         # fs = gcsfs.GCSFileSystem(project = 'wagon-bootcamp-311206')
         # fs.ls('big_picture_model')
 
         with open(state_path, 'rb') as fp:
-             pickle.load(fp)
+             state = pickle.load(fp)
         # with open('big_picture_model/model/state.pkl', 'rb') as file:
         #     state = CPU_Unpickler(file).load()
 
