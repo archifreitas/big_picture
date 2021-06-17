@@ -268,6 +268,9 @@ class Classifier():
                     labels.append(self.labels_tag[j])
         
         #print(labels)
+        if not labels:
+            labels = ['Other']
+            
         self._init()
 
         sa = softmax(self.sa_model(self.tokenizer(
