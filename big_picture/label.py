@@ -1,11 +1,7 @@
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 #import hdbscan as hdb
-<<<<<<< HEAD
-from sklearn.cluster import KMeans
-=======
 from sklearn.cluster import KMeans, Birch
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
 from wordcloud import WordCloud
 
 from big_picture.clusters import Cluster
@@ -48,11 +44,7 @@ class Label():
             vectors, self.vectorizer = embedding_strings(df.pre_processed_text,  return_model=True)
         else:
             pass
-<<<<<<< HEAD
-
-=======
  
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         self.model = None
         self.sizes = None
         if model_name == 'kmeans':
@@ -62,8 +54,6 @@ class Label():
                                   clusters=1+len(df)//30,
                                   **kwargs
                                   )
-<<<<<<< HEAD
-=======
         elif model_name == 'birch':
             self.clusters= self.birch(df, 
                                   'pre_processed_text', 
@@ -71,7 +61,6 @@ class Label():
                                   clusters=1+len(df)//30,
                                   **kwargs
                                   )
->>>>>>> 04cf431e0307b3a6b7f79e114eb7c8ad2aaa63e7
         else:
             print("No model was found, this may cause problems in the future")
 

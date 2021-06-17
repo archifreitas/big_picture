@@ -72,7 +72,7 @@ class Classifier():
         self.input_shape = None
         self.output_shape = None
 
-    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False):
+    def fit(self, train, model='dropout', source='web', params=None, sample=None, printed=False, pre_made=False):
         '''
         Generate a model and fit it to the train_data.
 
@@ -91,18 +91,22 @@ class Classifier():
         # Train classifier with train data
         ohe = OneHotEncoder()
 
-        params = {
-            'lemmatize': False,
-        }
 
-        train = pre_process(
-            train, 
-            source=source, 
-            params=params, 
-            sample=sample, 
-            printed=printed)
+        if pre_made:
+            X = train
+        else:
+            params = {
+                'lemmatize': False,
+            }
 
-        X = embedding_strings(train['minor_preprocessing'])
+            train = pre_process(
+                train, 
+                source=source, 
+                params=params, 
+                sample=sample, 
+                printed=printed)
+
+            X = embedding_strings(train['minor_preprocessing'])
         y = ohe.fit_transform(train[['label']]).toarray()
 
         # Save tags for labels to class
@@ -364,10 +368,10 @@ def initialize_class_bert_dropout(shape, output):
     model.add(layers.Dense(700, activation='relu', input_dim=shape))
     model.add(layers.Dropout(0.2))
     
-    model.add(layers.Dense(150, activation='relu'))
+    model.add(layers.Dense(350, activation='relu'))
     model.add(layers.Dropout(0.2))
     
-    model.add(layers.Dense(50, activation='relu'))
+    model.add(layers.Dense(150, activation='relu'))
     
     model.add(layers.Dense(output, activation='softmax'))
     
